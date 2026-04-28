@@ -26,6 +26,42 @@ For ``high-risk AI systems'' (defined in Article 6 with reference to Annexes I a
 
 The volatility-forecasting use case demonstrated in \Cref{sec:demonstration} is not currently classified as ``high-risk'' under Annex III, which lists creditworthiness and access to essential services among financial-sector use cases but not market-data forecasting. The AI Act framing is therefore forward-looking for the present demonstration; we record audit data that would satisfy Article 12 and Article 19 in the event that the use case were brought into scope, or in the event that the firm chooses to apply the same standard voluntarily.
 
+\Cref{tab:article19} maps each Article 19 sub-requirement to the specific \texttt{mr-audit} fields that satisfy it, providing a compliance traceability matrix a CRO can hand to a regulator without re-engineering. The \texttt{cross-domain} examples in the package's \texttt{examples/} directory (a sklearn LogisticRegression credit-scorecard scenario; a statsmodels ARIMA macroeconomic forecaster) demonstrate the same field mapping holds for in-scope Annex III.5(b) credit-scoring use cases as well as for the demonstration's volatility forecaster.
+
+\begin{table}[H]
+\centering
+\caption{EU AI Act Article 19 sub-requirements mapped to \texttt{mr-audit} schema fields. The Article 19 sub-requirements listed here are the four explicit logging items in the regulation's text; ``identification of natural persons'' is the only one that requires firm-side application policy rather than automatic capture by the package.}\label{tab:article19}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+Article 19 sub-requirement & \texttt{mr-audit} field(s) & Captured automatically? \\
+\midrule
+\multirow{2}{*}{Period of each use} & \texttt{timestamp\_utc} & yes (per record) \\
+                                   & \texttt{prediction.predicted\_for\_date} & yes (caller-supplied) \\
+\midrule
+\multirow{3}{*}{Reference database against} & \texttt{data.input\_data\_source} & yes (caller-supplied) \\
+\multirow{3}{*}{which input data has been checked} & \texttt{data.input\_data\_hash} & yes (auto-computed) \\
+                                                  & \texttt{data.feature\_names} & yes (from extractor) \\
+\midrule
+\multirow{2}{*}{Input data for which the search} & \texttt{data.feature\_values\_summary} & yes (from extractor) \\
+\multirow{2}{*}{has led to a match} & \texttt{data.input\_data\_hash} & yes (deterministic) \\
+\midrule
+\multirow{2}{*}{Identification of natural persons} & (firm-side application policy) & no -- requires firm input \\
+\multirow{2}{*}{involved in verification of results} & e.g.\ \texttt{model.parameters[''reviewer\_id'']} & yes if firm passes it \\
+\midrule
+\textit{Beyond Article 19, additional captures:} & & \\
+Code provenance & \texttt{code.code\_commit\_hash} & yes (from git) \\
+Library provenance & \texttt{code.library\_versions} & yes (from \texttt{sys.modules}) \\
+Model identity + parameters & \texttt{model.\{name, version, parameters\}} & yes \\
+Compute environment & \texttt{compute.\{python\_version, platform\}} & yes \\
+Random state & \texttt{random\_seed} & yes (caller-supplied) \\
+Tamper-evidence & \texttt{prev\_record\_hash} chain & yes (auto-computed) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two right-most columns separate concerns honestly: automatic capture (the package's responsibility) from caller-supplied data (the firm's responsibility, e.g.\ logging a reviewer's identifier when a human-in-the-loop is part of the AI system). The package does not attempt to enforce the latter; it provides the schema slot.
+
 \subsection{NIST AI Risk Management Framework}\label{sec:nist}
 
 The NIST AI RMF (\citealp{NIST_AI_100_1}) is a voluntary U.S.\ framework structured around four functions: GOVERN (organisational policies and accountability), MAP (context and risk identification), MEASURE (analysis, assessment, and tracking), and MANAGE (prioritisation and response). The MEASURE function explicitly references monitoring for distributional shifts in input data, behavioural drift in model outputs, and traceability of decisions. NIST AI 100-1 is not legally binding, but it is increasingly cited by firms as the de facto operational implementation framework that ``operationalises'' SR 11-7's principles for ML models.

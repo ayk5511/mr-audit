@@ -1,0 +1,22 @@
+{
+  "source_panel": "/Users/akmbp/Documents/EB1A-Profile/papers/paper2-volatility/results/forecasts_5d.parquet",
+  "n_days_in_panel": 980,
+  "n_days_audited": 975,
+  "n_models": 7,
+  "models": [
+    "GARCH",
+    "EGARCH",
+    "GJR-GARCH",
+    "HAR-RV",
+    "LightGBM",
+    "XGBoost",
+    "Ensemble"
+  ],
+  "n_records_written": 6825,
+  "lookback_days": 5,
+  "audit_log_path": "/Users/akmbp/Documents/EB1A-Profile/papers/paper4-audit-trail/studies/audit_logs/paper2_demo.db",
+  "elapsed_seconds": 302.546,
+  "write_rate_records_per_second": 22.6,
+  "log_size_kb": 15104,
+  "log_size_bytes_per_record": 2266
+}

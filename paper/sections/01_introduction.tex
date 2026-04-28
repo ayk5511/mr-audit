@@ -1,0 +1,36 @@
+\section{Introduction}\label{sec:intro}
+
+A bank that deploys a machine-learning model into a decision-relevant role is, in the United States since 2011 and in the European Union since 2024, expected to maintain a record of every prediction the model produces: what code computed it, on what data, with what hyperparameters, in what compute environment, with what random seed, at what time. The expectations are codified in Federal Reserve SR 11-7 / OCC Bulletin 2011-12 \citep{FedSR117, OCC2011} and in the EU AI Act \citep{EUAIAct}, Articles 12 and 19. The compliance question is binary: either the audit trail exists, is intact, and is replayable, or it does not.
+
+The technical question is more subtle. The compliance literature describes \emph{what} should be in an audit trail; it says little about \emph{how} to actually log one for a Python ML pipeline at scale. Existing open-source tools fall into three categories. (1) Experiment-tracking platforms (MLflow, Weights \& Biases) are designed for the train-time exploration phase, with rich UIs for comparing runs but limited support for inference-time logging at scale and no built-in immutability or hash-chained integrity. (2) Data and model versioning tools (DVC, Pachyderm) version artifacts but do not log per-prediction inputs and outputs. (3) Cloud-managed monitoring services (AWS SageMaker Model Monitor, Google Vertex AI Model Monitoring) are vendor-locked, expensive at audit-grade volume, and require trusting the cloud provider with the exact inference data the audit is designed to protect.
+
+What is missing is an open-source, vendor-neutral Python package that produces an SR 11-7-shaped audit trail with low-friction integration. We provide one and demonstrate it.
+
+\subsection{Contribution}
+
+This paper makes two contributions.
+
+First, we introduce \texttt{mr-audit}, an open-source Python package (MIT-licensed; PyPI \texttt{mr-audit}; repository \href{https://github.com/ayk5511/mr-audit}{github.com/ayk5511/mr-audit}) that produces immutable, hash-chained, replayable, drift-aware audit trails for ML inference pipelines. The package is integrated into a calling pipeline by a one-line decorator (\verb|@auditable|) and a context manager (\texttt{AuditContext}); no central server, no cloud account, no schema-design effort. Records are stored locally in either SQLite or JSON Lines format, both vendor-neutral. The package implements a SHA-256 hash chain (each record's identifier is the canonical-JSON SHA-256 of its content; each record carries the previous record's identifier; tampering with any single record breaks the chain). It ships with a replay engine that reconstructs any prediction from the log, a drift-detection module (Kolmogorov-Smirnov two-sample test plus Population Stability Index with Laplace smoothing), and a regulator-export bundle that produces a self-contained zip archive whose integrity can be verified using off-the-shelf hash tools without any \texttt{mr-audit} code installed.
+
+Second, we demonstrate the package on a real ML pipeline by retrospectively instrumenting the seven-model volatility-forecasting panel of \citet{KhanVol2026} (S\&P 500 5-day realized volatility forecasts from three GARCH variants, HAR-RV, LightGBM, XGBoost, and an equal-weight ensemble across 980 trading days, 2022-01-03 to 2025-11-26). The instrumented run produces a 6,825-record audit log. We then exercise the four primary use cases an SR 11-7 model risk management team would run on such a log:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Reproducibility audit.} A randomly-sampled set of 5 records replays bit-identically: the original input hash, the model parameters, and the final prediction match exactly when re-run.
+    \item \textbf{Drift detection.} The KS test flags drift in 44 of the 44 monthly windows evaluated against the 2022 Q1 baseline. The pattern is consistent with the documented regime shift between high-vol 2022 and lower-vol 2023+ in \citet{KhanVol2026}.
+    \item \textbf{Validation report.} Per-model summary statistics (n, prediction mean, prediction std, library versions at last record) are computable from the audit log alone, with no external data.
+    \item \textbf{Regulator export.} A 841 KB zip bundle is produced from the 6,825-record log; its manifest, file SHA-256 hashes, and chain integrity all verify cleanly using a stand-alone tool that imports nothing from \texttt{mr-audit}.
+\end{enumerate}
+
+\subsection{What this paper claims and does not claim}
+
+Three explicit scoping decisions deserve flagging.
+
+First, we do \emph{not} claim that using \texttt{mr-audit} makes any model \emph{compliant} with SR 11-7, OCC 2011-12, or the EU AI Act. Compliance is a determination by the firm and its supervisor; the package provides the technical record-keeping infrastructure that compliance requires.
+
+Second, the empirical demonstration is a \emph{retrospective} instrumentation. The 6,825 records are written today against the previously-fit forecast panel of \citet{KhanVol2026}; we are not running the seven-model pipeline live and recording in real time. The retrospective form is appropriate for the demonstration's purpose (showing that the four use cases work end-to-end at a realistic scale, $\sim$7,000 records) but does not establish that \texttt{mr-audit} would handle a live high-throughput inference workload without further engineering. Section~\ref{sec:limitations} discusses this honestly.
+
+Third, the EU AI Act's high-risk classification (Annex III) does not currently include volatility forecasting. SR 11-7 is the live regulatory pull for the demonstration's empirical target; the EU AI Act framing is forward-looking. We do not overclaim that vol forecasting is presently in scope of the AI Act's high-risk regime.
+
+\subsection{Roadmap}
+
+\Cref{sec:regulatory} reviews the SR 11-7 and EU AI Act requirements relevant to audit trails, distinguishing what the regulations specify from what they leave to the firm. \Cref{sec:package} describes the \texttt{mr-audit} package: design principles, schema, hash chain, storage backends, replay engine, drift module, export bundle, and CLI. \Cref{sec:demonstration} reports the empirical demonstration on the Khan (2026) volatility panel, including the four use cases. \Cref{sec:discussion} discusses the implications and limitations. \Cref{sec:reproducibility} states the reproducibility commitment, including the audit script that re-derives every numerical claim in this paper.

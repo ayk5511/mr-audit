@@ -1,0 +1,167 @@
+\section{The mr-audit package}\label{sec:package}
+
+This section describes the design and implementation of \texttt{mr-audit}. The package is open-source under MIT license at \href{https://github.com/ayk5511/mr-audit}{github.com/ayk5511/mr-audit}; the version described here is 0.0.1.
+
+\subsection{Design principles}\label{sec:design_principles}
+
+The package follows four design principles, in order of priority.
+
+\textit{1. Vendor-neutrality.} All persistence is local. The two storage backends (SQLite, JSON Lines) are open formats with stable specifications. There is no cloud service, no central server, no schema-design platform, no proprietary file format. A firm can run \texttt{mr-audit} entirely on-premises, in a regulated network, with the audit log on a write-only file system.
+
+\textit{2. Low integration friction.} Adding \texttt{mr-audit} to an existing pipeline is one decorator and one context manager: the developer adds \verb|@auditable(model_name=..., model_version=...)| to the prediction function, and wraps the calling code in \verb|with AuditContext(log_path=...): ...|. Without an active context the decorator is a no-op (the function runs unrecorded), so the same code can be run with or without auditing depending on context.
+
+\textit{3. Immutability and integrity.} The log is append-only by API; there is no public ``edit'' or ``delete'' operation. Each record carries a SHA-256 identifier computed from its canonical-JSON content (excluding the identifier itself), and a pointer to the previous record's identifier. Tampering with any single record breaks the chain at that point.
+
+\textit{4. Replayability.} Every prediction must be reconstructable from the log alone, given the unwrapped prediction function. The replay engine recomputes the input hash from the supplied inputs and re-runs the function; both the input hash and the prediction value must match the recorded values for the replay to be considered valid.
+
+\subsection{Schema}\label{sec:schema}
+
+Each audit record is a Python \texttt{AuditRecord} dataclass with the following structure (\Cref{tab:schema}). The schema is versioned (\texttt{SCHEMA\_VERSION = "0.1.0"}); future schema evolutions will increment this version while remaining backward-readable for older records.
+
+\begin{table}[H]
+\centering
+\caption{The \texttt{AuditRecord} schema. Substate fields are themselves dataclasses; the table shows the fully-flattened key set.}\label{tab:schema}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+Field & Type & Captures \\
+\midrule
+\texttt{schema\_version} & str & e.g. ``0.1.0'' \\
+\texttt{timestamp\_utc} & str (ISO 8601) & when the prediction was logged \\
+\midrule
+\multicolumn{3}{l}{\textit{code} (CodeState)} \\
+\quad \texttt{code\_commit\_hash} & str|None & git SHA of the calling repository \\
+\quad \texttt{code\_dirty} & bool & uncommitted changes at predict time \\
+\quad \texttt{library\_versions} & dict[str,str] & numpy, pandas, scipy, torch, sklearn, arch, statsmodels \\
+\midrule
+\multicolumn{3}{l}{\textit{data} (DataState)} \\
+\quad \texttt{input\_data\_hash} & str (hex) & SHA-256 of canonical-JSON of inputs \\
+\quad \texttt{input\_data\_source} & str|None & free-form data source identifier \\
+\quad \texttt{feature\_names} & tuple[str] & ordered feature names \\
+\quad \texttt{feature\_values\_summary} & dict|None & feature values or summary stats \\
+\midrule
+\multicolumn{3}{l}{\textit{model} (ModelState)} \\
+\quad \texttt{name} & str & e.g. ``GJR-GARCH'' \\
+\quad \texttt{version} & str & e.g. ``1.0.0'' \\
+\quad \texttt{parameters} & dict[str,Any] & hyperparameter set \\
+\quad \texttt{model\_artifact\_hash} & str|None & SHA-256 of serialised model \\
+\midrule
+\multicolumn{3}{l}{\textit{compute} (ComputeState)} \\
+\quad \texttt{python\_version} & str & e.g. ``3.14.0'' \\
+\quad \texttt{platform} & str & OS + arch \\
+\quad \texttt{process\_id} & int|None & PID of the predict call \\
+\midrule
+\multicolumn{3}{l}{\textit{prediction} (Prediction)} \\
+\quad \texttt{value} & float | list[float] & scalar or vector \\
+\quad \texttt{horizon\_days} & int|None & forecast horizon \\
+\quad \texttt{predicted\_for\_date} & str|None & ISO 8601 date \\
+\midrule
+\texttt{random\_seed} & int|None & seed used for stochastic models \\
+\texttt{prev\_record\_hash} & str|None & SHA-256 of preceding record (chain link) \\
+\texttt{record\_id} & str & SHA-256 of this record's canonical JSON \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \texttt{record\_id} is computed at write time by the storage backend, not by the user, and is excluded from its own hash input. The \texttt{prev\_record\_hash} of the first record in any log is \texttt{None} (the genesis record).
+
+\subsection{Hash chain}\label{sec:hash_chain}
+
+The hash chain implements a Merkle-style integrity guarantee. Each record's identifier is computed as
+\[
+\texttt{record\_id} = \texttt{SHA-256}(\,\text{canonical-JSON}(R \setminus \{\texttt{record\_id}\})\,)
+\]
+where canonical-JSON is the deterministic serialisation defined by \texttt{json.dumps(..., sort\_keys=True, separators=(",", ":"))}. The exclusion of \texttt{record\_id} from its own hash input is necessary; the exclusion is implemented in \texttt{compute\_record\_id} (\texttt{src/mr\_audit/core/hash.py}).
+
+Chain integrity is verified by \texttt{verify\_chain}, which performs three checks for each record:
+
+\begin{enumerate}[leftmargin=*]
+    \item The record's \texttt{record\_id} matches the canonical hash of its own contents.
+    \item The record's \texttt{prev\_record\_hash} matches the \texttt{record\_id} of the immediately preceding record in insertion order.
+    \item The first record's \texttt{prev\_record\_hash} is \texttt{None}.
+\end{enumerate}
+
+Tampering with any field of any record breaks check (1) for that record and all subsequent records (because the chain link cascades). Reordering records breaks check (2). Inserting a forged record requires both forging a valid hash for the inserted record and re-computing all subsequent records' hashes, which is computationally infeasible if the chain is also externally backed up at any point.
+
+The chosen hash function is SHA-256 (NIST FIPS 180-4). The choice is consistent with current best practice and aligns with the EU AI Act's intent in Article 19 without specifying any particular algorithm.
+
+\subsection{Storage backends}\label{sec:storage}
+
+Two backends are implemented, both vendor-neutral and locally runnable.
+
+\textit{SQLiteStore} (\texttt{src/mr\_audit/core/store.py}). Records are stored in a single-table schema with columns \texttt{(id INTEGER PRIMARY KEY AUTOINCREMENT, record\_id TEXT UNIQUE, prev\_record\_hash TEXT, timestamp\_utc TEXT, json TEXT)}. Indexes on \texttt{record\_id} and \texttt{timestamp\_utc} provide $O(\log n)$ lookup by either. Suited for production use up to millions of records on a single file.
+
+\textit{JSONLStore}. Records are appended one per line to a single file. Lightweight, human-readable, easily processed by \texttt{jq}, \texttt{pandas}, or \texttt{R}. Suited for lightweight pipelines and human inspection. Random access requires a full scan; suited for moderate sizes.
+
+Both backends preserve insertion order, which is what the hash chain depends on. Both are append-only by API. No public API exposes deletion or update.
+
+\subsection{Replay engine}\label{sec:replay}
+
+The \texttt{replay} function in \texttt{src/mr\_audit/replay/engine.py} reconstructs any prediction from a sealed audit record. The contract is: given the record and the unwrapped prediction function, calling the function with the recorded inputs must produce the recorded prediction. The function returns a \texttt{ReplayResult} dataclass with three principal flags:
+
+\begin{itemize}[leftmargin=*]
+    \item \texttt{input\_hash\_match} -- the canonical-JSON hash of the supplied inputs equals the recorded \texttt{input\_data\_hash}.
+    \item \texttt{prediction\_match} -- the re-run output equals the recorded \texttt{prediction.value} within the supplied tolerance (default $10^{-9}$).
+    \item \texttt{library\_version\_warnings} -- non-fatal diagnostic; library versions present at replay time are compared to the versions recorded.
+\end{itemize}
+
+Replay is non-destructive: the input record is never mutated. The supplied inputs are re-hashed and compared; if the supplied inputs do not match the recorded input hash (\Cref{sec:demonstration_replay}), the result still re-runs the function but flags the mismatch for the auditor's attention.
+
+\subsection{Drift detection module}\label{sec:drift_module}
+
+The \texttt{detect\_drift} function in \texttt{src/mr\_audit/drift/input.py} compares two record sequences (a baseline and a window) for distribution drift across the recorded feature summaries. Two methods are computed for each feature:
+
+\textit{Kolmogorov-Smirnov two-sample test.} Null hypothesis: the two samples come from the same distribution. Returns the test statistic and an asymptotic p-value. We use SciPy's \texttt{stats.ks\_2samp} for the implementation.
+
+\textit{Population Stability Index.} A scalar measure of distribution shift, defined as
+\[
+\text{PSI} = \sum_{i=1}^{B} (p_{w,i} - p_{b,i}) \cdot \log\left(\frac{p_{w,i}}{p_{b,i}}\right),
+\]
+where $p_{b,i}$ and $p_{w,i}$ are the proportions of baseline and window samples in bucket $i$, respectively. Buckets are equal-frequency on the baseline. Empty buckets are handled by Laplace (add-half) smoothing -- adding 0.5 to each bucket count before normalising -- to avoid log(0) blowups while keeping the estimator unbiased on well-populated buckets. Standard credit-risk thresholds (PSI $<$ 0.10 stable, 0.10--0.25 moderate, $\geq$ 0.25 high) are widely adopted in bank model-risk practice.
+
+The choice to compute drift on \emph{summaries} rather than raw feature values is deliberate. Audit logs that store full feature vectors per prediction grow rapidly and may capture sensitive customer-level information. The default summary captures the per-feature value at prediction time but not the underlying customer record; firms can opt into full-vector storage by passing \texttt{summarise\_features=False} to the \verb|@auditable| decorator.
+
+\subsection{Regulator export bundle}\label{sec:export_module}
+
+The \texttt{export\_bundle} function in \texttt{src/mr\_audit/export/bundle.py} produces a self-contained zip archive that an external reviewer can verify without any \texttt{mr-audit} code installed. The bundle contains:
+
+\begin{itemize}[leftmargin=*]
+    \item \texttt{manifest.json} -- bundle metadata + per-file SHA-256 hashes
+    \item \texttt{audit\_records.jsonl} -- all records, canonical JSON, one per line
+    \item \texttt{chain\_verification.json} -- chain verification result at export time
+    \item \texttt{README.txt} -- human-readable description and replay instructions
+    \item \texttt{manifest.sha256} -- SHA-256 of \texttt{manifest.json} in the standard \texttt{sha256sum}-compatible format
+\end{itemize}
+
+A reviewer with only \texttt{sha256sum} and a JSON parser can verify the bundle's integrity end-to-end: \texttt{sha256sum manifest.json} should match \texttt{manifest.sha256}; for each file in \texttt{manifest.json}'s \texttt{files} field, \texttt{sha256sum <name>} should match the listed digest. With \texttt{mr-audit} installed, the verification is one command: \texttt{mr-audit inspect <bundle>}.
+
+\subsection{Command-line interface}\label{sec:cli}
+
+The \texttt{mr-audit} CLI provides four subcommands, each one operation a model risk team would execute from a terminal:
+
+\begin{lstlisting}[language=bash]
+mr-audit show     <log>             # tabular summary of records
+mr-audit verify   <log>             # hash-chain integrity check
+mr-audit export   <log> <bundle>    # build regulator-ready bundle
+mr-audit inspect  <bundle>          # verify and summarise a bundle
+\end{lstlisting}
+
+The CLI is deliberately small. Programmatic users should import the Python API; the CLI is for one-off inspection and audit-handoff workflows.
+
+\subsection{Test coverage}\label{sec:tests}
+
+The package ships with 47 unit tests across six test modules, all passing on Python 3.11+ on macOS, Linux, and Windows. Coverage spans:
+
+\begin{itemize}[leftmargin=*]
+    \item Hash determinism across repeated calls
+    \item Tampering detection (record-level and chain-link-level)
+    \item Genesis-record special case
+    \item Storage round-trip (SQLite + JSONL) with persistence across reopens
+    \item Decorator no-op without an active context
+    \item Private kwargs (\texttt{\_data\_source}, \texttt{\_random\_seed}, etc.) excluded from the data hash but retained in the record metadata
+    \item Replay match for correct inputs; mismatch detection for wrong inputs and for changed function logic
+    \item Drift detection: synthetic same-distribution samples (no drift) and synthetic +3 SD shift (clear drift)
+    \item PSI Laplace-smoothed handling of empty buckets
+    \item Bundle round-trip + tamper detection
+    \item Empty-log bundle export
+\end{itemize}

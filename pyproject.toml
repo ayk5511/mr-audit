@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mr-audit"
+version = "0.0.1"
+description = "An audit-trail framework for ML pipelines under SR 11-7 and the EU AI Act"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "Akram Khan", email = "1819ak@gmail.com" }
+]
+keywords = [
+    "model risk management",
+    "SR 11-7",
+    "OCC 2011-12",
+    "EU AI Act",
+    "audit trail",
+    "machine learning",
+    "reproducibility",
+    "compliance",
+    "regulatory technology",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+parquet = ["pyarrow>=14.0"]
+test = ["pytest>=7.0", "pytest-cov>=4.0"]
+dev = ["mr-audit[test,parquet]", "ruff>=0.5"]
+
+[project.urls]
+Repository = "https://github.com/ayk5511/mr-audit"
+Issues = "https://github.com/ayk5511/mr-audit/issues"
+
+[project.scripts]
+mr-audit = "mr_audit.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mr_audit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-v"

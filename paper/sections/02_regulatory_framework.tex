@@ -115,3 +115,28 @@ Several open-source and commercial tools partially address the requirements in \
 \end{itemize}
 
 We do not claim our package is uniformly superior to these tools. MLflow has a far richer experiment-management UI, Weights \& Biases has hosted infrastructure, DVC has stronger data versioning. Our claim is narrower: \texttt{mr-audit} is the open-source Python package most narrowly designed for the specific requirements of \Cref{tab:requirements}, with low integration friction and no vendor lock-in.
+
+\Cref{tab:tool_comparison} summarises the comparison along the audit-trail dimensions that matter for SR 11-7 / EU AI Act compliance. The table is intentionally narrow in scope: it does not score the tools on dimensions where they are clearly stronger than \texttt{mr-audit} (e.g., MLflow's experiment-comparison UI, W\&B's hosted dashboards, DVC's data versioning). Within the audit-trail dimensions, \texttt{mr-audit} is the only entry that satisfies all requirements out of the box.
+
+\providecommand{\halfcheck}{$\bullet$}
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{Audit-trail capability comparison across open-source and commercial tooling. \checkmark{} = native support; \halfcheck{} = partial / requires custom code; -- = not provided. Cells reflect the tools' default behaviour as of v2024--2025 documentation review.}\label{tab:tool_comparison}
+\begin{tabular}{@{}p{4.6cm}cccccc@{}}
+\toprule
+Capability & \texttt{mr-audit} & MLflow & W\&B & DVC & \shortstack{SageMaker\\Monitor} & \shortstack{IBM AI\\FactSheets} \\
+\midrule
+Per-prediction logging & \checkmark & \halfcheck & \halfcheck & -- & \checkmark & -- \\
+Hash-chain integrity & \checkmark & -- & -- & -- & -- & -- \\
+Replay engine (bit-identical) & \checkmark & -- & -- & -- & -- & -- \\
+Input drift detection & \checkmark & -- & \halfcheck & -- & \checkmark & -- \\
+Output drift detection & \checkmark & -- & \halfcheck & -- & \checkmark & -- \\
+Regulator-export bundle & \checkmark & -- & -- & -- & -- & \halfcheck \\
+Code-state provenance (commit, libs) & \checkmark & \halfcheck & \halfcheck & \checkmark & -- & -- \\
+Vendor-neutral local storage & \checkmark & \checkmark & -- & \checkmark & -- & \checkmark \\
+Open source (MIT/Apache) & \checkmark & \checkmark & -- & \checkmark & -- & \halfcheck \\
+\bottomrule
+\end{tabular}
+\end{table}

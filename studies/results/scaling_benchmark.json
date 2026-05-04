@@ -1,0 +1,24 @@
+[
+  {
+    "n_records": 1000,
+    "wall_clock_write_s": 19.32,
+    "write_throughput_rps": 51.8,
+    "size_on_disk_bytes": 1273856,
+    "size_on_disk_mb": 1.21,
+    "bytes_per_record": 1273.9,
+    "chain_verify_s": 0.009,
+    "chain_verify_throughput_rps": 113032.1,
+    "chain_valid": true
+  },
+  {
+    "n_records": 10000,
+    "wall_clock_write_s": 223.911,
+    "write_throughput_rps": 44.7,
+    "size_on_disk_bytes": 12627968,
+    "size_on_disk_mb": 12.04,
+    "bytes_per_record": 1262.8,
+    "chain_verify_s": 0.1,
+    "chain_verify_throughput_rps": 100007.0,
+    "chain_valid": true
+  }
+]

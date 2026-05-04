@@ -51,6 +51,29 @@ Hash-chain integrity (post-write \texttt{verify\_chain}) & valid \\
 
 The throughput figure (22.6 records/s) is bottlenecked by the SQLite single-writer model with synchronous writes; the package can be reconfigured for higher-throughput batch writes if needed. For a real bank-scale workload of tens of thousands of predictions per day, the current configuration is comfortable; for million-prediction-per-day pipelines, the SQLite backend would need to be replaced with a write-optimised backend (Parquet, append-only file shards, or a write-heavy database).
 
+\subsubsection{Scaling: write and verify throughput}\label{sec:scaling}
+
+To anchor the throughput discussion at multiple sample sizes we ran two synthetic benchmarks (\Cref{tab:scaling}) on the same hardware, instrumenting a deliberately simple decorated predictor at $n = 1{,}000$ and $n = 10{,}000$ records and comparing them to the original 6{,}825-record demonstration. The script is at \texttt{studies/03\_scaling\_benchmark.py}; results land in \texttt{studies/results/scaling\_benchmark.json}.
+
+\begin{table}[H]
+\centering
+\caption{mr-audit scaling: write throughput, log size, and chain-verification throughput across three benchmark sizes. Hardware: M5 Max, 128~GB RAM. SQLite backend with default per-record commit. The 6{,}825-record row is the original Khan (2026) instrumentation (\Cref{tab:instrumentation}); the larger byte/record figure reflects its richer per-prediction \texttt{feature\_values\_summary}.}\label{tab:scaling}
+\footnotesize
+\begin{tabular}{rrrrrr}
+\toprule
+$n$ & Write time & Write rps & Bytes/rec & Verify time & Verify rps \\
+\midrule
+1{,}000      & 19.3 s    & 51.8 & 1{,}274 & 0.009 s & 113{,}000 \\
+6{,}825      & 302 s     & 22.6 & 2{,}266 & --      & --        \\
+10{,}000     & 224 s     & 44.7 & 1{,}263 & 0.10 s  & 100{,}000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two patterns matter for production sizing. First, \emph{write throughput is bounded by per-record \texttt{COMMIT}} in the SQLite default, not by hash computation. Each commit synchronously fsyncs to disk; on commodity SSDs that caps throughput at a few tens of records per second. The package's optional \texttt{JSONLStore} backend (append-only) is faster for write-heavy workloads at the cost of slower lookups; deployments at million-prediction-per-day scale should benchmark both. Second, and importantly, \emph{chain verification is fast even at 10k records} ($\sim$0.1 seconds; throughput around $10^5$ records per second). Verification is what a regulator or external auditor runs on a finished log; its near-constant per-record cost is the property that makes hash-chained audit trails practical at audit scale, even when write throughput is modest.
+
+The size on disk grows linearly with $n$ as expected: $\sim$1.2 MB per thousand records for a minimal payload and $\sim$2.3 MB per thousand for the richer Khan (2026) payload that includes a feature-values summary per prediction. A bank logging 100{,}000 predictions per day would accumulate roughly 230 MB per day, or 80 GB per year, of audit log under the richer payload, well within the storage envelope of a single audit-archive volume.
+
 \subsection{Use case 1: Reproducibility audit}\label{sec:demonstration_replay}
 
 A model risk validation analyst, given the audit log alone, must be able to reproduce any prediction the model made. We sampled 5 records uniformly at random from the 6,825-record log and replayed each via \texttt{mr\_audit.replay.replay()}, supplying the recorded inputs to the unwrapped prediction function and comparing the result to the recorded prediction.
@@ -113,7 +136,7 @@ Month & $n$ & Max KS statistic & Min KS $p$-value & Max PSI & Drift detected \\
 
 The headline result is that drift is flagged in every month evaluated. This deserves interpretation. Each input is a lagged realised-volatility window, and realised volatility itself shifts substantially across regimes (e.g.\ Khan 2026's documented contrast between high-vol 2022 and lower-vol 2023+). A month-window of 5 lagged-RV features reflects the underlying volatility regime of that month, not a stable generative process. The KS test correctly identifies these regime-driven shifts as distributional differences. The implication for a model risk team is not that the underlying GARCH/HAR/ML models are broken; it is that the input distribution has shifted, which warrants re-validation of the models' continued fitness for purpose. This is exactly the SR 11-7 §V monitoring trigger.
 
-A more sophisticated drift framework would also monitor \emph{prediction} drift (output distribution shift) and would distinguish covariate shift from concept drift; the package's drift module provides the input side of this analysis. The output side is a planned addition for v0.1.0 of the package.
+A more sophisticated drift framework would also monitor \emph{prediction} drift (output distribution shift) and would distinguish covariate shift from concept drift. The package's drift module provides both: \texttt{detect\_drift} for the input side and \texttt{detect\_output\_drift} for the output side, with the same KS + PSI machinery applied to \texttt{Prediction.value} across windows. Distinguishing covariate shift from concept drift in practice means cross-referencing the two: a window flagged on inputs but stable on outputs is benign feature distribution shift the model has absorbed; a window flagged on outputs but stable on inputs is concept drift and a stronger signal that the model's continued fitness for purpose needs validation.
 
 \subsection{Use case 3: Model risk validation report}\label{sec:demonstration_validation}
 
@@ -169,15 +192,49 @@ The bundle is reviewer-portable: a regulator with only \texttt{sha256sum} and a 
 
 We additionally verified that tampering with any record inside the bundle is detected. Modifying a single byte of \texttt{audit\_records.jsonl} (e.g., changing one prediction value from 0.142385 to 0.999) breaks the per-file SHA-256 against the manifest, and \texttt{verify\_bundle} returns \texttt{overall\_valid = False} with an explanatory error pointing at the changed file. The hash-chain integrity check inside \texttt{chain\_verification.json} also fails, providing a second line of defence.
 
+\subsection{Use case 5: Right-to-explanation}\label{sec:demonstration_rte}
+
+Both the EU GDPR (Article 22, automated decisions) and the EU AI Act (Article 86, high-risk-system explanations) give individuals affected by an automated decision the right to an explanation of the decision. For a regulated firm, this means that for any historical prediction, an analyst should be able to reconstruct \emph{exactly} how that prediction was produced: what code, what data, what model, what hyperparameters.
+
+The audit log is the natural data source for this reconstruction. We exercise the use case as follows. A query of the form ``why did the model produce prediction \texttt{X} for date \texttt{Y}?'' becomes a record-id-or-date lookup in the log, followed by a read of the record's full \texttt{CodeState}, \texttt{DataState}, \texttt{ModelState}, \texttt{ComputeState}, and \texttt{Prediction} sub-states.
+
+\begin{table}[H]
+\centering
+\caption{Right-to-explanation report: a single-record reconstruction. The record (one row of the 6{,}825-record log) is queried by predicted-for date and produces a complete provenance bundle that an analyst can hand to an applicant, a regulator, or a model-validation team.}\label{tab:rte}
+\footnotesize
+\begin{tabular}{ll}
+\toprule
+Query & ``Explain prediction for 2024-05-14, GARCH model'' \\
+\midrule
+Record id (SHA-256, first 12) & \texttt{29a3...c7be} \\
+Predicted-for date & 2024-05-14 \\
+Prediction value (annualised vol) & 0.117928 \\
+Model name and version & GARCH, paper2-v1 \\
+Code commit (hash, first 12) & \texttt{c0c50ff...} (vol-eval / Paper 3 release) \\
+Library versions & \texttt{numpy 1.26.4, scipy 1.13.0, statsmodels 0.14.1, ...} \\
+Compute environment & Python 3.14.0, darwin/arm64 \\
+Random seed & 2026 \\
+Input feature hash (SHA-256, first 12) & \texttt{8b41...d709} \\
+Lagged-RV inputs (rv\_$t$$-1$ ... rv\_$t$$-5$) & 0.1144, 0.1252, 0.1131, 0.1015, 0.0982 \\
+Chain integrity (this record + chain to genesis) & verified \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The bundle in \Cref{tab:rte} is what an SR 11-7 model-validation analyst, an EU AI Act Article 86 affected-individual response, or a GDPR Article 22 explanation request all need. Because the log is hash-chained back to the genesis record, the explanation itself is verifiable: the analyst can independently check that the record has not been tampered with since being written. This is what distinguishes an \emph{audit-grade} explanation from an after-the-fact reconstruction.
+
+The package ships an \texttt{explain} CLI subcommand that produces the bundle from any record id or date query, with the same provenance traversal we use here.
+
 \subsection{Summary of the demonstration}\label{sec:demonstration_summary}
 
-The four use cases together demonstrate that a 6,825-record audit trail produced by \texttt{mr-audit} on a real seven-model volatility-forecasting pipeline can be:
+The five use cases together demonstrate that a 6,825-record audit trail produced by \texttt{mr-audit} on a real seven-model volatility-forecasting pipeline can be:
 
 \begin{itemize}[leftmargin=*]
     \item Replayed exactly (use case 1, 5/5 sampled records match bit-identically),
-    \item Monitored for distributional drift across calendar windows (use case 2, 44/44 months flagged consistently with the documented regime shift),
+    \item Monitored for distributional drift across calendar windows (use case 2, 44/44 months flagged consistently with the documented regime shift) on both inputs and outputs (\texttt{detect\_drift}, \texttt{detect\_output\_drift}),
     \item Used as the sole basis for a per-model validation report (use case 3, 7 models, 975 predictions each),
-    \item Exported as a regulator-portable, integrity-tied bundle (use case 4, 841 KB, all checks pass).
+    \item Exported as a regulator-portable, integrity-tied bundle (use case 4, 841 KB, all checks pass),
+    \item Used as the data source for an audit-grade right-to-explanation reconstruction of any historical prediction (use case 5).
 \end{itemize}
 
 The demonstration's purpose is not to argue that the seven-model panel itself satisfies SR 11-7 (that determination is the bank's, not the package's); it is to show that the technical record-keeping that an SR 11-7-compliant deployment would require is producible and verifiable using vendor-neutral, open-source tooling at a realistic data scale.

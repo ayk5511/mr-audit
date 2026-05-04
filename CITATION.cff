@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+title: "mr-audit: An Audit-Trail Framework for Machine-Learning Pipelines under SR 11-7 and the EU AI Act"
+message: "If you use this software in research or production, please cite it as below."
+type: software
+authors:
+  - family-names: Khan
+    given-names: Akram
+    orcid: "https://orcid.org/0009-0002-7521-8648"
+    email: 1819ak@gmail.com
+date-released: 2026-04-28
+version: "0.1.0"
+url: "https://github.com/ayk5511/mr-audit"
+repository-code: "https://github.com/ayk5511/mr-audit"
+license: MIT
+keywords:
+  - audit-trail
+  - model-risk-management
+  - SR-11-7
+  - EU-AI-Act
+  - reproducibility
+  - hash-chain
+  - replay
+  - drift-detection
+  - regulator-defensible
+  - financial-machine-learning
+preferred-citation:
+  type: software
+  title: "mr-audit: An Audit-Trail Framework for ML Pipelines under SR 11-7 and the EU AI Act"
+  authors:
+    - family-names: Khan
+      given-names: Akram
+      orcid: "https://orcid.org/0009-0002-7521-8648"
+  year: 2026
+  url: "https://github.com/ayk5511/mr-audit"
+  version: "0.1.0"

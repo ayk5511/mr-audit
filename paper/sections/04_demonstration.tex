@@ -1,6 +1,8 @@
 \section{Empirical demonstration: instrumenting the Khan (2026) volatility panel}\label{sec:demonstration}
 
-This section reports the empirical demonstration of \texttt{mr-audit} on a real ML pipeline. We retrospectively instrument the seven-model volatility-forecasting panel of \citet{KhanVol2026}: three GARCH variants (GARCH, EGARCH, GJR-GARCH), HAR-RV, LightGBM, XGBoost, and an equal-weight ensemble, predicting 5-day-ahead realised volatility on the S\&P 500 over 980 trading days from 2022-01-03 to 2025-11-26.
+\sloppy
+
+This section reports the empirical demonstration of \texttt{mr-audit} on a real ML pipeline. We retrospectively instrument the seven-model volatility-forecasting panel of \citet{KhanVol2026}: three GARCH variants (GARCH, EGARCH, GJR-GARCH), HAR-RV, LightGBM, XGBoost, and an equal-weight ensemble, predicting 5-day-ahead realized volatility on the S\&P 500 over 980 trading days from 2022-01-03 to 2025-11-26.
 
 \subsection{Instrumentation setup}\label{sec:demonstration_setup}
 
@@ -55,9 +57,10 @@ A model risk validation analyst, given the audit log alone, must be able to repr
 
 \begin{table}[H]
 \centering
-\caption{Reproducibility audit results: 5 randomly-sampled records from the 6,825-record log. Tolerance for prediction equality is $10^{-12}$.}\label{tab:replay}
-\footnotesize
-\begin{tabular}{lllrcc}
+\caption{Reproducibility audit results: 5 randomly-sampled records from the 6{,}825-record log. Tolerance for prediction equality is $10^{-12}$.}\label{tab:replay}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lllrp{1.7cm}p{1.7cm}@{}}
 \toprule
 Record & Model & Predicted-for date & Logged prediction & Input hash match & Prediction match \\
 \midrule

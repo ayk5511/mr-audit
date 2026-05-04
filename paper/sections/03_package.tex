@@ -1,5 +1,7 @@
 \section{The mr-audit package}\label{sec:package}
 
+\sloppy
+
 This section describes the design and implementation of \texttt{mr-audit}. The package is open-source under MIT license at \href{https://github.com/ayk5511/mr-audit}{github.com/ayk5511/mr-audit}; the version described here is 0.0.1.
 
 \subsection{Design principles}\label{sec:design_principles}
@@ -21,8 +23,9 @@ Each audit record is a Python \texttt{AuditRecord} dataclass with the following 
 \begin{table}[H]
 \centering
 \caption{The \texttt{AuditRecord} schema. Substate fields are themselves dataclasses; the table shows the fully-flattened key set.}\label{tab:schema}
-\footnotesize
-\begin{tabular}{lll}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{4.7cm}p{2.6cm}p{7.1cm}@{}}
 \toprule
 Field & Type & Captures \\
 \midrule

@@ -1,5 +1,7 @@
 \section{Regulatory framework}\label{sec:regulatory}
 
+\sloppy
+
 The audit-trail requirements an ML pipeline must satisfy come from three regulatory sources of growing weight: SR 11-7 / OCC 2011-12 (United States, 2011), the EU AI Act (Regulation 2024/1689, 2024), and the NIST AI Risk Management Framework (NIST AI 100-1, 2023). They differ in legal force and in granularity but converge on a common set of technical record-keeping requirements that the package described in \Cref{sec:package} aims to satisfy.
 
 \subsection{SR 11-7 / OCC 2011-12}\label{sec:sr117}
@@ -31,8 +33,9 @@ The volatility-forecasting use case demonstrated in \Cref{sec:demonstration} is 
 \begin{table}[H]
 \centering
 \caption{EU AI Act Article 19 sub-requirements mapped to \texttt{mr-audit} schema fields. The Article 19 sub-requirements listed here are the four explicit logging items in the regulation's text; ``identification of natural persons'' is the only one that requires firm-side application policy rather than automatic capture by the package.}\label{tab:article19}
-\footnotesize
-\begin{tabular}{lll}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{5.0cm}p{6.5cm}p{3.4cm}@{}}
 \toprule
 Article 19 sub-requirement & \texttt{mr-audit} field(s) & Captured automatically? \\
 \midrule

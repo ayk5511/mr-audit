@@ -8,11 +8,11 @@ The audit-trail requirements an ML pipeline must satisfy come from three regulat
 
 \citet{FedSR117} and the companion \citet{OCC2011} are the canonical U.S.\ supervisory guidance on model risk management for federally-regulated banking institutions. The guidance applies to ``models'' broadly defined, encompassing both traditional statistical models and modern machine-learning systems. The relevant requirements for audit trails fall in three sections of the guidance:
 
-\textit{Model documentation} (SR 11-7 §V). Banks are expected to document each model's purpose, theory, methodology, assumptions, and limitations, with sufficient detail that a knowledgeable reader unfamiliar with the model can understand its operation. For ML models, this includes the choice of architecture, hyperparameters, training data, and validation results.
+\textit{Model documentation} (SR 11-7 §V.G). Banks are expected to document each model's purpose, theory, methodology, assumptions, and limitations, with sufficient detail that a knowledgeable reader unfamiliar with the model can understand its operation. For ML models, this includes the choice of architecture, hyperparameters, training data, and validation results.
 
-\textit{Ongoing monitoring} (SR 11-7 §V, ``Model Validation''). Banks are expected to verify that models perform as intended over time, with specific attention to changes in input data distributions, model drift, and the continued validity of model assumptions. SR 11-7 explicitly mentions monitoring of input variables for drift relative to the development sample.
+\textit{Ongoing monitoring} (SR 11-7 §IV.C, within Model Validation). Banks are expected to verify that models perform as intended over time, with specific attention to changes in input data distributions, model drift, and the continued validity of model assumptions. SR 11-7 explicitly mentions monitoring of input variables for drift relative to the development sample.
 
-\textit{Model inventory} (SR 11-7 §VI). Each model in production must be in a model inventory that captures (at minimum) the model identity, version, owner, validation status, and use cases. The inventory is the durable record an examiner consults during a supervisory review.
+\textit{Model inventory} (SR 11-7 §V.F). Each model in production must be in a model inventory that captures (at minimum) the model identity, version, owner, validation status, and use cases. The inventory is the durable record an examiner consults during a supervisory review.
 
 The guidance is principles-based; it does not specify how the documentation, monitoring, or inventory should be technically implemented. In practice, large U.S.\ banks operate model risk management organizations of 50 to several hundred staff who maintain these records, often through a combination of centralized governance platforms (e.g., SAS Model Manager) and bespoke spreadsheet-based tracking.
 

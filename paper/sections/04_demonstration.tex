@@ -8,7 +8,7 @@ This section reports the empirical demonstration of \texttt{mr-audit} on a real 
 
 The instrumentation is retrospective. The seven-model panel of \citet{KhanVol2026} ships its forecast outputs as \texttt{forecasts\_5d.parquet} (980 rows $\times$ 7 model columns + 1 actual column) at \href{https://github.com/ayk5511/volatility-forecasting}{ayk5511/volatility-forecasting}. We do not re-run the panel's training or forecasting code. Instead, we treat each (date, model) cell of the parquet as one prediction event and write one \texttt{mr-audit} record per cell, capturing what an integrated-from-the-start instrumentation would have recorded.
 
-For each prediction event, the recorded inputs are the five lagged realised-volatility values $(\text{rv}_{t-1}, \text{rv}_{t-2}, \text{rv}_{t-3}, \text{rv}_{t-4}, \text{rv}_{t-5})$, which are the most natural input for a 5-day-ahead vol forecast and which provide a meaningful basis for drift analysis over the test period. The \texttt{prediction.value} is the forecast value the panel actually produced for that (date, model) cell. The \texttt{model.name} is one of the seven model names; \texttt{model.version} is set to \texttt{paper2-v1} for all records to match the source release.
+For each prediction event, the recorded inputs are the five lagged realized-volatility values $(\text{rv}_{t-1}, \text{rv}_{t-2}, \text{rv}_{t-3}, \text{rv}_{t-4}, \text{rv}_{t-5})$, which are the most natural input for a 5-day-ahead vol forecast and which provide a meaningful basis for drift analysis over the test period. The \texttt{prediction.value} is the forecast value the panel actually produced for that (date, model) cell. The \texttt{model.name} is one of the seven model names; \texttt{model.version} is set to \texttt{paper2-v1} for all records to match the source release.
 
 The instrumentation is a one-line decorator addition (see \texttt{studies/01\_instrument\_paper2.py}):
 
@@ -81,7 +81,7 @@ To confirm that the replay engine actually detects mismatches, we additionally v
 
 \subsection{Use case 2: Drift detection}\label{sec:demonstration_drift}
 
-A model risk team is required by SR 11-7 §V (Ongoing Monitoring) to detect distributional shift in input data over time. We bucket the 6,825 records by the predicted-for month (47 calendar months from 2022-01 to 2025-11), use the first three months (2022 Q1, $n=399$ records) as the baseline, and apply \texttt{detect\_drift} to each subsequent month against this baseline.
+A model risk team is required by SR 11-7 §IV.C (Ongoing Monitoring, within Model Validation) to detect distributional shift in input data over time. We bucket the 6,825 records by the predicted-for month (47 calendar months from 2022-01 to 2025-11), use the first three months (2022 Q1, $n=399$ records) as the baseline, and apply \texttt{detect\_drift} to each subsequent month against this baseline.
 
 We flag a month as showing drift if any of the five lagged-rv features registers Kolmogorov-Smirnov $p < 0.01$ against the baseline, or if any feature's PSI exceeds 0.25 (the credit-risk ``high'' threshold). The result is a monthly drift table.
 

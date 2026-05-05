@@ -67,7 +67,7 @@ The two right-most columns separate concerns honestly: automatic capture (the pa
 
 \subsection{NIST AI Risk Management Framework}\label{sec:nist}
 
-The NIST AI RMF (\citealp{NIST_AI_100_1}) is a voluntary U.S.\ framework structured around four functions: GOVERN (organisational policies and accountability), MAP (context and risk identification), MEASURE (analysis, assessment, and tracking), and MANAGE (prioritisation and response). The MEASURE function explicitly references monitoring for distributional shifts in input data, behavioural drift in model outputs, and traceability of decisions. NIST AI 100-1 is not legally binding, but it is increasingly cited by firms as the de facto operational implementation framework that ``operationalises'' SR 11-7's principles for ML models.
+The NIST AI RMF (\citealp{NIST_AI_100_1}) is a voluntary U.S.\ framework structured around four functions: GOVERN (organizational policies and accountability), MAP (context and risk identification), MEASURE (analysis, assessment, and tracking), and MANAGE (prioritisation and response). The MEASURE function explicitly references monitoring for distributional shifts in input data, behavioural drift in model outputs, and traceability of decisions. NIST AI 100-1 is not legally binding, but it is increasingly cited by firms as the de facto operational implementation framework that ``operationalises'' SR 11-7's principles for ML models.
 
 \subsection{Synthesis: what an audit trail must capture}\label{sec:requirements}
 
@@ -116,7 +116,7 @@ Several open-source and commercial tools partially address the requirements in \
 
 We do not claim our package is uniformly superior to these tools. MLflow has a far richer experiment-management UI, Weights \& Biases has hosted infrastructure, DVC has stronger data versioning. Our claim is narrower: \texttt{mr-audit} is the open-source Python package most narrowly designed for the specific requirements of \Cref{tab:requirements}, with low integration friction and no vendor lock-in.
 
-\Cref{tab:tool_comparison} summarises the comparison along the audit-trail dimensions that matter for SR 11-7 / EU AI Act compliance. The table is intentionally narrow in scope: it does not score the tools on dimensions where they are clearly stronger than \texttt{mr-audit} (e.g., MLflow's experiment-comparison UI, W\&B's hosted dashboards, DVC's data versioning). Within the audit-trail dimensions, \texttt{mr-audit} is the only entry that satisfies all requirements out of the box.
+\Cref{tab:tool_comparison} summarizes the comparison along the audit-trail dimensions that matter for SR 11-7 / EU AI Act compliance. The table is intentionally narrow in scope: it does not score the tools on dimensions where they are clearly stronger than \texttt{mr-audit} (e.g., MLflow's experiment-comparison UI, W\&B's hosted dashboards, DVC's data versioning). Within the audit-trail dimensions, \texttt{mr-audit} is the only entry that satisfies all requirements out of the box.
 
 \providecommand{\halfcheck}{$\bullet$}
 \begin{table}[H]

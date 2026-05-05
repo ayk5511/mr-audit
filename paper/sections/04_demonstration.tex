@@ -49,7 +49,7 @@ Hash-chain integrity (post-write \texttt{verify\_chain}) & valid \\
 \end{tabular}
 \end{table}
 
-The throughput figure (22.6 records/s) is bottlenecked by the SQLite single-writer model with synchronous writes; the package can be reconfigured for higher-throughput batch writes if needed. For a real bank-scale workload of tens of thousands of predictions per day, the current configuration is comfortable; for million-prediction-per-day pipelines, the SQLite backend would need to be replaced with a write-optimised backend (Parquet, append-only file shards, or a write-heavy database).
+The throughput figure (22.6 records/s) is bottlenecked by the SQLite single-writer model with synchronous writes; the package can be reconfigured for higher-throughput batch writes if needed. For a real bank-scale workload of tens of thousands of predictions per day, the current configuration is comfortable; for million-prediction-per-day pipelines, the SQLite backend would need to be replaced with a write-optimized backend (Parquet, append-only file shards, or a write-heavy database).
 
 \subsubsection{Scaling: write and verify throughput}\label{sec:scaling}
 
@@ -134,7 +134,7 @@ Month & $n$ & Max KS statistic & Min KS $p$-value & Max PSI & Drift detected \\
 \end{tabular}
 \end{table}
 
-The headline result is that drift is flagged in every month evaluated. This deserves interpretation. Each input is a lagged realised-volatility window, and realised volatility itself shifts substantially across regimes (e.g.\ Khan 2026's documented contrast between high-vol 2022 and lower-vol 2023+). A month-window of 5 lagged-RV features reflects the underlying volatility regime of that month, not a stable generative process. The KS test correctly identifies these regime-driven shifts as distributional differences. The implication for a model risk team is not that the underlying GARCH/HAR/ML models are broken; it is that the input distribution has shifted, which warrants re-validation of the models' continued fitness for purpose. This is exactly the SR 11-7 §V monitoring trigger.
+The headline result is that drift is flagged in every month evaluated. This deserves interpretation. Each input is a lagged realized-volatility window, and realized volatility itself shifts substantially across regimes (e.g.\ Khan 2026's documented contrast between high-vol 2022 and lower-vol 2023+). A month-window of 5 lagged-RV features reflects the underlying volatility regime of that month, not a stable generative process. The KS test correctly identifies these regime-driven shifts as distributional differences. The implication for a model risk team is not that the underlying GARCH/HAR/ML models are broken; it is that the input distribution has shifted, which warrants re-validation of the models' continued fitness for purpose. This is exactly the SR 11-7 §V monitoring trigger.
 
 A more sophisticated drift framework would also monitor \emph{prediction} drift (output distribution shift) and would distinguish covariate shift from concept drift. The package's drift module provides both: \texttt{detect\_drift} for the input side and \texttt{detect\_output\_drift} for the output side, with the same KS + PSI machinery applied to \texttt{Prediction.value} across windows. Distinguishing covariate shift from concept drift in practice means cross-referencing the two: a window flagged on inputs but stable on outputs is benign feature distribution shift the model has absorbed; a window flagged on outputs but stable on inputs is concept drift and a stronger signal that the model's continued fitness for purpose needs validation.
 
@@ -202,21 +202,23 @@ The audit log is the natural data source for this reconstruction. We exercise th
 \centering
 \caption{Right-to-explanation report: a single-record reconstruction. The record (one row of the 6{,}825-record log) is queried by predicted-for date and produces a complete provenance bundle that an analyst can hand to an applicant, a regulator, or a model-validation team.}\label{tab:rte}
 \footnotesize
-\begin{tabular}{ll}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{5.6cm}p{8.4cm}@{}}
 \toprule
-Query & ``Explain prediction for 2024-05-14, GARCH model'' \\
+Field & Value \\
 \midrule
+Query & ``Explain prediction for 2024-05-14, GARCH model'' \\
 Record id (SHA-256, first 12) & \texttt{29a3...c7be} \\
 Predicted-for date & 2024-05-14 \\
-Prediction value (annualised vol) & 0.117928 \\
+Prediction value (annualized vol) & 0.117928 \\
 Model name and version & GARCH, paper2-v1 \\
-Code commit (hash, first 12) & \texttt{c0c50ff...} (vol-eval / Paper 3 release) \\
-Library versions & \texttt{numpy 1.26.4, scipy 1.13.0, statsmodels 0.14.1, ...} \\
-Compute environment & Python 3.14.0, darwin/arm64 \\
+Code commit (hash, first 12) & \texttt{c0c50ff...} (Paper 3 release) \\
+Library versions (selected) & numpy 1.26.4, scipy 1.13.0, statsmodels 0.14.1 \\
+Compute environment & Python 3.14.0, darwin / arm64 \\
 Random seed & 2026 \\
 Input feature hash (SHA-256, first 12) & \texttt{8b41...d709} \\
-Lagged-RV inputs (rv\_$t$$-1$ ... rv\_$t$$-5$) & 0.1144, 0.1252, 0.1131, 0.1015, 0.0982 \\
-Chain integrity (this record + chain to genesis) & verified \\
+Lagged-RV inputs ($\text{rv}_{t-1}, \ldots, \text{rv}_{t-5}$) & 0.1144, 0.1252, 0.1131, 0.1015, 0.0982 \\
+Chain integrity (record + chain to genesis) & verified \\
 \bottomrule
 \end{tabular}
 \end{table}

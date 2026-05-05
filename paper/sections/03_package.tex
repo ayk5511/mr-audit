@@ -47,7 +47,7 @@ Field & Type & Captures \\
 \quad \texttt{name} & str & e.g. ``GJR-GARCH'' \\
 \quad \texttt{version} & str & e.g. ``1.0.0'' \\
 \quad \texttt{parameters} & dict[str,Any] & hyperparameter set \\
-\quad \texttt{model\_artifact\_hash} & str|None & SHA-256 of serialised model \\
+\quad \texttt{model\_artifact\_hash} & str|None & SHA-256 of serialized model \\
 \midrule
 \multicolumn{3}{l}{\textit{compute} (ComputeState)} \\
 \quad \texttt{python\_version} & str & e.g. ``3.14.0'' \\
@@ -74,7 +74,7 @@ The hash chain implements a Merkle-style integrity guarantee. Each record's iden
 \[
 \texttt{record\_id} = \texttt{SHA-256}(\,\text{canonical-JSON}(R \setminus \{\texttt{record\_id}\})\,)
 \]
-where canonical-JSON is the deterministic serialisation defined by \texttt{json.dumps(..., sort\_keys=True, separators=(",", ":"))}. The exclusion of \texttt{record\_id} from its own hash input is necessary; the exclusion is implemented in \texttt{compute\_record\_id} (\texttt{src/mr\_audit/core/hash.py}).
+where canonical-JSON is the deterministic serialization defined by \texttt{json.dumps(..., sort\_keys=True, separators=(",", ":"))}. The exclusion of \texttt{record\_id} from its own hash input is necessary; the exclusion is implemented in \texttt{compute\_record\_id} (\texttt{src/mr\_audit/core/hash.py}).
 
 Chain integrity is verified by \texttt{verify\_chain}, which performs three checks for each record:
 
@@ -122,7 +122,7 @@ The \texttt{detect\_drift} function in \texttt{src/mr\_audit/drift/input.py} com
 \]
 where $p_{b,i}$ and $p_{w,i}$ are the proportions of baseline and window samples in bucket $i$, respectively. Buckets are equal-frequency on the baseline. Empty buckets are handled by Laplace (add-half) smoothing -- adding 0.5 to each bucket count before normalising -- to avoid log(0) blowups while keeping the estimator unbiased on well-populated buckets. Standard credit-risk thresholds (PSI $<$ 0.10 stable, 0.10--0.25 moderate, $\geq$ 0.25 high) are widely adopted in bank model-risk practice.
 
-The choice to compute drift on \emph{summaries} rather than raw feature values is deliberate. Audit logs that store full feature vectors per prediction grow rapidly and may capture sensitive customer-level information. The default summary captures the per-feature value at prediction time but not the underlying customer record; firms can opt into full-vector storage by passing \texttt{summarise\_features=False} to the \verb|@auditable| decorator.
+The choice to compute drift on \emph{summaries} rather than raw feature values is deliberate. Audit logs that store full feature vectors per prediction grow rapidly and may capture sensitive customer-level information. The default summary captures the per-feature value at prediction time but not the underlying customer record; firms can opt into full-vector storage by passing \texttt{summarize\_features=False} to the \verb|@auditable| decorator.
 
 \subsection{Regulator export bundle}\label{sec:export_module}
 
@@ -146,7 +146,7 @@ The \texttt{mr-audit} CLI provides four subcommands, each one operation a model 
 mr-audit show     <log>             # tabular summary of records
 mr-audit verify   <log>             # hash-chain integrity check
 mr-audit export   <log> <bundle>    # build regulator-ready bundle
-mr-audit inspect  <bundle>          # verify and summarise a bundle
+mr-audit inspect  <bundle>          # verify and summarize a bundle
 \end{lstlisting}
 
 The CLI is deliberately small. Programmatic users should import the Python API; the CLI is for one-off inspection and audit-handoff workflows.

@@ -1,0 +1,28 @@
+{
+  "baseline": {
+    "valid": true,
+    "n_errors": 0,
+    "n_records": 6825
+  },
+  "scenario_a": {
+    "detected": true,
+    "n_errors": 1,
+    "tamper": "single_record_prediction_value"
+  },
+  "scenario_b": {
+    "detected": true,
+    "n_errors": 1,
+    "tamper": "embedded_prev_record_hash"
+  },
+  "scenario_c": {
+    "detected": false,
+    "n_errors": 0,
+    "tamper": "tail_truncation_100_records",
+    "note": "Tail truncation produces a self-consistent sub-chain. Detection requires external anchoring of the latest record_id."
+  },
+  "scenario_d": {
+    "detected": true,
+    "n_errors": 1,
+    "tamper": "middle_record_deletion"
+  }
+}

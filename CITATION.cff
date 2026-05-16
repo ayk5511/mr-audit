@@ -9,6 +9,7 @@ authors:
     email: 1819ak@gmail.com
 date-released: 2026-05-13
 version: "0.1.0"
+# Paper version: v1.0 (released 2026-05-13). Package version: 0.1.0 (unchanged).
 url: "https://github.com/ayk5511/mr-audit"
 repository-code: "https://github.com/ayk5511/mr-audit"
 license: MIT

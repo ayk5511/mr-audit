@@ -1,3 +1,7 @@
+% =============================================================================
+% Regulatory primary sources (legally binding or recognized standards)
+% =============================================================================
+
 @misc{FedSR117,
   author = {{Federal Reserve}},
   title = {{SR 11-7}: Guidance on Model Risk Management},
@@ -24,6 +28,13 @@
   howpublished = {\url{https://eur-lex.europa.eu/eli/reg/2024/1689/oj}}
 }
 
+@misc{GDPR,
+  author = {{European Parliament and Council}},
+  title = {Regulation ({EU}) 2016/679 of the European Parliament and of the Council of 27 April 2016 on the protection of natural persons with regard to the processing of personal data ({General Data Protection Regulation})},
+  year = {2016},
+  howpublished = {\url{https://eur-lex.europa.eu/eli/reg/2016/679/oj}}
+}
+
 @misc{NIST_AI_100_1,
   author = {{National Institute of Standards and Technology}},
   title = {{AI Risk Management Framework} ({AI RMF 1.0})},
@@ -33,6 +44,167 @@
   howpublished = {\url{https://doi.org/10.6028/NIST.AI.100-1}},
   note = {NIST AI 100-1}
 }
+
+@misc{ISO42001,
+  author = {{International Organization for Standardization and International Electrotechnical Commission}},
+  title = {{ISO/IEC 42001:2023}: Information technology --- Artificial intelligence --- Management system},
+  year = {2023},
+  howpublished = {\url{https://www.iso.org/standard/81230.html}},
+  note = {ISO/IEC AI management system standard, published December 2023}
+}
+
+% =============================================================================
+% AI accountability and governance literature (academic)
+% =============================================================================
+
+@inproceedings{MitchellModelCards2019,
+  author = {Mitchell, Margaret and Wu, Simone and Zaldivar, Andrew and Barnes, Parker and Vasserman, Lucy and Hutchinson, Ben and Spitzer, Elena and Raji, Inioluwa Deborah and Gebru, Timnit},
+  title = {Model Cards for Model Reporting},
+  booktitle = {Proceedings of the Conference on Fairness, Accountability, and Transparency ({FAT*} '19)},
+  pages = {220--229},
+  year = {2019},
+  publisher = {{ACM}},
+  doi = {10.1145/3287560.3287596}
+}
+
+@inproceedings{Raji2020Audit,
+  author = {Raji, Inioluwa Deborah and Smart, Andrew and White, Rebecca N. and Mitchell, Margaret and Gebru, Timnit and Hutchinson, Ben and Smith-Loud, Jamila and Theron, Daniel and Barnes, Parker},
+  title = {Closing the {AI} Accountability Gap: Defining an End-to-End Framework for Internal Algorithmic Auditing},
+  booktitle = {Proceedings of the 2020 Conference on Fairness, Accountability, and Transparency ({FAT*} '20)},
+  pages = {33--44},
+  year = {2020},
+  publisher = {{ACM}},
+  doi = {10.1145/3351095.3372873}
+}
+
+@article{BrundageVerifiableClaims2020,
+  author = {Brundage, Miles and Avin, Shahar and Wang, Jasmine and Belfield, Haydn and Krueger, Gretchen and Hadfield, Gillian and Khlaaf, Heidy and Yang, Jingying and Toner, Helen and Fong, Ruth and Maharaj, Tegan and others},
+  title = {Toward Trustworthy {AI} Development: Mechanisms for Supporting Verifiable Claims},
+  journal = {arXiv preprint arXiv:2004.07213},
+  year = {2020},
+  url = {https://arxiv.org/abs/2004.07213}
+}
+
+@article{GebruDatasheets2021,
+  author = {Gebru, Timnit and Morgenstern, Jamie and Vecchione, Briana and Vaughan, Jennifer Wortman and Wallach, Hanna and Iii, Hal Daum{\'e} and Crawford, Kate},
+  title = {Datasheets for Datasets},
+  journal = {Communications of the {ACM}},
+  volume = {64},
+  number = {12},
+  pages = {86--92},
+  year = {2021},
+  doi = {10.1145/3458723}
+}
+
+@inproceedings{PushkarnaDataCards2022,
+  author = {Pushkarna, Mahima and Zaldivar, Andrew and Kjartansson, Oddur},
+  title = {Data Cards: Purposeful and Transparent Dataset Documentation for Responsible {AI}},
+  booktitle = {Proceedings of the 2022 ACM Conference on Fairness, Accountability, and Transparency ({FAccT} '22)},
+  pages = {1776--1826},
+  year = {2022},
+  publisher = {{ACM}},
+  doi = {10.1145/3531146.3533231}
+}
+
+@inproceedings{Sambasivan2021Cascades,
+  author = {Sambasivan, Nithya and Kapania, Shivani and Highfill, Hannah and Akrong, Diana and Paritosh, Praveen and Aroyo, Lora M.},
+  title = {``{Everyone wants to do the model work, not the data work}'': Data Cascades in High-Stakes {AI}},
+  booktitle = {Proceedings of the 2021 CHI Conference on Human Factors in Computing Systems},
+  year = {2021},
+  publisher = {{ACM}},
+  doi = {10.1145/3411764.3445518}
+}
+
+@inproceedings{SchelterContinuousIntegration2018,
+  author = {Schelter, Sebastian and Biessmann, Felix and Januschowski, Tim and Salinas, David and Seufert, Stephan and Szarvas, Gyuri},
+  title = {On Challenges in Machine Learning Model Management},
+  booktitle = {IEEE Data Engineering Bulletin},
+  volume = {41},
+  number = {4},
+  pages = {5--15},
+  year = {2018}
+}
+
+@inproceedings{ArnoldFactSheets2019,
+  author = {Arnold, Matthew and Bellamy, Rachel K. E. and Hind, Michael and Houde, Stephanie and Mehta, Sameep and Mojsilovi{\'c}, Aleksandra and Nair, Ravi and Ramamurthy, Karthikeyan Natesan and Olteanu, Alexandra and Piorkowski, David and Reimer, Darrell and Richards, John and Tsay, Jason and Varshney, Kush R.},
+  title = {{FactSheets}: Increasing Trust in {AI} Services through Supplier's Declarations of Conformity},
+  journal = {{IBM} Journal of Research and Development},
+  volume = {63},
+  number = {4/5},
+  year = {2019},
+  doi = {10.1147/JRD.2019.2942288}
+}
+
+@inproceedings{ParachuriAlgorithmicAccountability2018,
+  author = {Parikh, Ravi B. and Teeple, Stephanie and Navathe, Amol S.},
+  title = {Addressing Bias in Artificial Intelligence in Health Care},
+  journal = {{JAMA}},
+  volume = {322},
+  number = {24},
+  pages = {2377--2378},
+  year = {2019},
+  doi = {10.1001/jama.2019.18058}
+}
+
+@inproceedings{KocielnikGotZeroDataset2019,
+  author = {Kocielnik, Rafal and Amershi, Saleema and Bennett, Paul N.},
+  title = {Will You Accept an Imperfect {AI}? Exploring Designs for Adjusting End-user Expectations of {AI} Systems},
+  booktitle = {Proceedings of the 2019 CHI Conference on Human Factors in Computing Systems},
+  year = {2019},
+  publisher = {{ACM}},
+  doi = {10.1145/3290605.3300641}
+}
+
+% =============================================================================
+% MLOps and software tooling (industry / OSS references)
+% =============================================================================
+
+@misc{MLflow,
+  author = {{Databricks}},
+  title = {{MLflow}: An open-source platform for the machine learning lifecycle},
+  year = {2024},
+  howpublished = {\url{https://github.com/mlflow/mlflow}}
+}
+
+@misc{DVC,
+  author = {{Iterative.ai}},
+  title = {{DVC}: Open-source version control system for Machine Learning Projects},
+  year = {2024},
+  howpublished = {\url{https://dvc.org/}}
+}
+
+@inproceedings{HuggingFaceModelCards2023,
+  author = {{Hugging Face}},
+  title = {Model Card Guidebook},
+  year = {2023},
+  howpublished = {\url{https://huggingface.co/docs/hub/model-cards}},
+  note = {Operational guide and templates building on Mitchell et al. (2019)}
+}
+
+% =============================================================================
+% Statistical methods (existing)
+% =============================================================================
+
+@article{KolmogorovSmirnov,
+  author = {Massey, Frank J.},
+  title = {The {Kolmogorov-Smirnov} Test for Goodness of Fit},
+  journal = {Journal of the American Statistical Association},
+  volume = {46},
+  number = {253},
+  pages = {68--78},
+  year = {1951}
+}
+
+@article{PSI_Karakoulas,
+  author = {Karakoulas, Grigoris},
+  title = {Empirical Validation of Retail Credit-Scoring Models},
+  journal = {RMA Journal},
+  year = {2004}
+}
+
+% =============================================================================
+% Cross-references to author's own portfolio
+% =============================================================================
 
 @techreport{KhanVol2026,
   author = {Khan, Akram},
@@ -58,35 +230,4 @@
   institution = {SSRN},
   year = {2026},
   url = {https://github.com/ayk5511/vol-eval}
-}
-
-@misc{MLflow,
-  author = {{Databricks}},
-  title = {{MLflow}: An open-source platform for the machine learning lifecycle},
-  year = {2024},
-  howpublished = {\url{https://github.com/mlflow/mlflow}}
-}
-
-@misc{DVC,
-  author = {{Iterative.ai}},
-  title = {{DVC}: Open-source version control system for Machine Learning Projects},
-  year = {2024},
-  howpublished = {\url{https://dvc.org/}}
-}
-
-@article{KolmogorovSmirnov,
-  author = {Massey, Frank J.},
-  title = {The {Kolmogorov-Smirnov} Test for Goodness of Fit},
-  journal = {Journal of the American Statistical Association},
-  volume = {46},
-  number = {253},
-  pages = {68--78},
-  year = {1951}
-}
-
-@article{PSI_Karakoulas,
-  author = {Karakoulas, Grigoris},
-  title = {Empirical Validation of Retail Credit-Scoring Models},
-  journal = {RMA Journal},
-  year = {2004}
 }

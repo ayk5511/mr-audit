@@ -28,6 +28,22 @@ Five limitations of the present work deserve careful noting.
 
 \textit{5. The package targets Python ML pipelines.} A bank using R, Java, MATLAB, or a vendor-supplied scoring engine cannot use \texttt{mr-audit} directly. The schema (\Cref{tab:schema}) is language-neutral (canonical JSON), so a port to other languages is straightforward in principle, but no port currently exists.
 
+\subsection{What would change our view}\label{sec:falsification}
+
+The paper makes empirical and methodological claims. We state explicitly what would force us to revise each.
+
+\textit{Claim: \texttt{mr-audit}'s schema satisfies SR 11-7, EU AI Act Articles 12 and 19, NIST AI 100-1, and ISO/IEC 42001 Clauses 6.1.2 / 8.3 / 9.1 simultaneously.} We would revise if (a) a supervisory enforcement action against a deployed mr-audit-instrumented system finds the trail insufficient for one of the four frameworks, identifying the specific clause not satisfied; or (b) a peer-reviewed compliance analysis identifies a regulatory clause we have mis-mapped in \Cref{tab:multi_regulation_matrix}. Either revision is incremental, the gap can be added to the schema in a backward-compatible way.
+
+\textit{Claim: hash-chain integrity detects single-record corruption, chain-link tampering, and middle-record deletion (\Cref{tab:adversarial} scenarios A, B, D).} We would revise if an independent reproduction of the adversarial experiment on a different log (different size, different model, different storage backend) yields a non-detection in any of those three scenarios. This is unlikely given the mathematical structure of SHA-256, but the empirical claim is sample-conditional and should be tested against deployment-realistic logs.
+
+\textit{Claim: tail truncation is undetectable by chain verification alone (\Cref{tab:adversarial} scenario C).} We would revise if a method is identified that detects tail truncation from the log alone without external anchoring. We do not believe such a method exists for a self-consistent chain, but we would adopt it if it is.
+
+\textit{Claim: input-vs-output drift comparison enables a covariate-vs-concept-drift distinction (\Cref{tab:drift_interpretation}).} We would revise if a published deployment finds that the four-quadrant framework misclassifies a real drift episode, identifying the case and the misclassification mechanism. The framework is well-established in model-risk practice (e.g., \citealp{KolmogorovSmirnov, PSI_Karakoulas}); the contribution here is the pairing of the two detectors in one package and the audit-log substrate for retrospective evaluation.
+
+\textit{Claim: low-friction integration cost.} We would revise if a deployed pipeline finds the integration cost materially higher than ``one decorator plus one context manager'' (the demonstrated cost on the Khan 2026 panel). Specifically: if a non-trivial bank ML pipeline (say, a credit-scoring engine running 100k predictions per day with multi-model ensembling and human-in-the-loop review) requires more than one engineer-week to integrate, we would document the additional integration patterns required and revise the ``low-friction'' claim accordingly.
+
+The falsification criteria are not asks for permission; they are commitments to update when evidence arrives. We invite that evidence.
+
 \subsection{Roadmap beyond v0.1.0}\label{sec:future}
 
 The v0.1.0 release ships an output-drift module (\texttt{drift/output.py}), symmetric to the input-drift module: KS two-sample plus PSI applied to \texttt{Prediction.value} across windows. Three further additions are planned for v0.2.0 and will not change the audit-record schema, so logs written under the current version remain readable:

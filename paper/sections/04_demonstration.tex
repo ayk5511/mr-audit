@@ -136,7 +136,57 @@ Month & $n$ & Max KS statistic & Min KS $p$-value & Max PSI & Drift detected \\
 
 The headline result is that drift is flagged in every month evaluated. This deserves interpretation. Each input is a lagged realized-volatility window, and realized volatility itself shifts substantially across regimes (e.g.\ Khan 2026's documented contrast between high-vol 2022 and lower-vol 2023+). A month-window of 5 lagged-RV features reflects the underlying volatility regime of that month, not a stable generative process. The KS test correctly identifies these regime-driven shifts as distributional differences. The implication for a model risk team is not that the underlying GARCH/HAR/ML models are broken; it is that the input distribution has shifted, which warrants re-validation of the models' continued fitness for purpose. This is exactly the SR 11-7 §V monitoring trigger.
 
-A more sophisticated drift framework would also monitor \emph{prediction} drift (output distribution shift) and would distinguish covariate shift from concept drift. The package's drift module provides both: \texttt{detect\_drift} for the input side and \texttt{detect\_output\_drift} for the output side, with the same KS + PSI machinery applied to \texttt{Prediction.value} across windows. Distinguishing covariate shift from concept drift in practice means cross-referencing the two: a window flagged on inputs but stable on outputs is benign feature distribution shift the model has absorbed; a window flagged on outputs but stable on inputs is concept drift and a stronger signal that the model's continued fitness for purpose needs validation.
+A more sophisticated drift framework would also monitor \emph{prediction} drift (output distribution shift) and would distinguish covariate shift from concept drift. The package's drift module provides both: \texttt{detect\_drift} for the input side and \texttt{detect\_output\_drift} for the output side, with the same KS + PSI machinery applied to \texttt{Prediction.value} across windows. We exercise the output-drift side in the next subsection.
+
+\subsubsection{Use case 2b: Output drift across models}\label{sec:demonstration_output_drift}
+
+The output-drift companion to \Cref{tab:drift} asks: do the seven models' \emph{predictions} themselves shift distributionally as the regime moves? \Cref{tab:output_drift} reports per-model output drift between the 2022 Q1 baseline (57 records per model) and the rest of the sample (918 windowed records per model), measured by the KS two-sample statistic on the predicted volatility values and by PSI with $B=10$ bins.
+
+\begin{table}[H]
+\centering
+\caption{Output drift per model, 2022 Q1 baseline vs. 2022-04 to 2025-11 window (44 monthly evaluations per model). KS statistic and PSI are averaged across the 44 months. Larger values indicate the model's prediction distribution shifts more across the regime. The baseline-mean and window-mean columns show the mean prediction value in each window, illustrating the underlying volatility regime shift from high-2022 to lower-2023+.}\label{tab:output_drift}
+\footnotesize
+\begin{tabular}{lrrrrr}
+\toprule
+Model & Mean KS & Max KS & Mean $|$PSI$|$ & Baseline mean & Window mean (avg) \\
+\midrule
+Ensemble  & 0.79 & 1.00 & 15.2 & 0.2044 & 0.1535 \\
+EGARCH    & 0.77 & 1.00 & 13.7 & 0.2158 & 0.1644 \\
+GARCH     & 0.76 & 1.00 & 13.6 & 0.2048 & 0.1625 \\
+HAR-RV    & 0.75 & 1.00 & 12.2 & 0.1978 & 0.1512 \\
+GJR-GARCH & 0.74 & 1.00 & 14.3 & 0.2072 & 0.1581 \\
+LightGBM  & 0.68 & 1.00 & 11.0 & 0.2105 & 0.1467 \\
+XGBoost   & 0.67 & 1.00 & 11.7 & 0.2104 & 0.1470 \\
+\midrule
+\multicolumn{6}{l}{\textit{Months flagged with output drift (KS $p<0.01$ or PSI band ``high'')}: 44 of 44 for all 7 models.} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three observations matter for model-risk practice.
+
+First, \emph{output drift is detected in every month for every model}. The result mirrors input drift (\Cref{tab:drift}), which is expected given that all seven models take lagged realized volatility as their primary input feature and the regime shift in the underlying RV propagates directly into their predictions. This is the joint-drift case: input and output drift fire together. By itself, the result is not a model-quality signal; it is a regime-detection signal, exactly the SR 11-7 §IV.C trigger that says ``re-validate the model against the new regime.''
+
+Second, \emph{GARCH-family models exhibit larger output drift than tree-based models}. The KS-statistic ordering is EGARCH-Ensemble-GARCH-HAR-RV-GJR-GARCH all in the 0.74-0.79 range, while LightGBM and XGBoost are at 0.67-0.68. The interpretation aligns with \citet{KhanVol2026}'s finding: parametric GARCH models adapt their predicted-volatility level more responsively to the regime shift (their conditional-variance recursion converges to a regime-conditional long-run mean), while tree models, calibrated against the 2019-2021 lower-vol validation window via early stopping, produce stickier predictions that under-shoot the high-vol 2022 baseline. The audit log preserves enough information to detect this differential responsiveness from output distributions alone, without re-fitting the models.
+
+Third, \emph{the input/output drift comparison enables a covariate-vs-concept-drift distinction in cases where they diverge}. In the demonstration both fire together; in a deployed pipeline the more informative case is the asymmetric one. \Cref{tab:drift_interpretation} summarises how a model-risk team should interpret the four joint outcomes. The package's pair of \texttt{detect\_drift} (input) and \texttt{detect\_output\_drift} (output) lets a deployed pipeline produce both rows of the table without re-validating against the original training data.
+
+\begin{table}[H]
+\centering
+\caption{Interpretation matrix for input vs.\ output drift, following the \citet{Raji2020Audit} framing of model-monitoring obligations. Each cell describes the inference a model-risk team should draw and the SR 11-7 §IV.C action it triggers.}\label{tab:drift_interpretation}
+\footnotesize
+\begin{tabular}{p{2.4cm}p{5.6cm}p{5.6cm}}
+\toprule
+              & \textbf{Output drift: NO}                                                          & \textbf{Output drift: YES} \\
+\midrule
+\textbf{Input drift: NO}  & \textbf{Stable.} Model operating within the documented assumption envelope. No re-validation triggered. & \textbf{Concept drift.} Inputs stable but predictions shifting; model behaviour has changed. Strongest re-validation trigger. \\
+\midrule
+\textbf{Input drift: YES} & \textbf{Absorbed shift.} Inputs moved but model has absorbed it without changing predictions. Low-priority review. & \textbf{Joint drift.} Inputs and predictions both shifting; consistent with a regime change in the underlying generating process. Re-validation against the new regime. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Khan (2026) panel falls in the joint-drift quadrant. The covariate-only and concept-only quadrants are best demonstrated on a stable model under perturbation, which is out of scope for this paper but is the subject of the \texttt{tests/test\_output\_drift.py} unit-test suite (which includes synthetic constructions of all four cells of \Cref{tab:drift_interpretation} to verify the framework's discriminative power).
 
 \subsection{Use case 3: Model risk validation report}\label{sec:demonstration_validation}
 
@@ -226,6 +276,66 @@ Chain integrity (record + chain to genesis) & verified \\
 The bundle in \Cref{tab:rte} is what an SR 11-7 model-validation analyst, an EU AI Act Article 86 affected-individual response, or a GDPR Article 22 explanation request all need. Because the log is hash-chained back to the genesis record, the explanation itself is verifiable: the analyst can independently check that the record has not been tampered with since being written. This is what distinguishes an \emph{audit-grade} explanation from an after-the-fact reconstruction.
 
 The package ships an \texttt{explain} CLI subcommand that produces the bundle from any record id or date query, with the same provenance traversal we use here.
+
+\subsection{Cross-domain validation: schema transfer beyond volatility forecasting}\label{sec:demonstration_crossdomain}
+
+The five use cases in \Cref{sec:demonstration_replay} through \Cref{sec:demonstration_rte} are demonstrated on a vol-forecasting pipeline because that is the empirical artefact of \citet{KhanVol2026} that we already control end-to-end. The schema and the package, however, are designed to transfer to other ML domains. We exercise this transfer on two additional pipelines whose audit logs are committed to the repository at \texttt{examples/audit\_logs/}:
+
+\begin{itemize}[leftmargin=*]
+    \item \textit{Credit scoring (EU AI Act Annex III high-risk).} A scikit-learn \texttt{LogisticRegression} classifier trained on synthetic credit-application data (800 prediction records). This use case is explicitly enumerated in EU AI Act Annex III §5(b) as high-risk, so the audit-trail requirements of Article 12 and Article 19 apply directly rather than being forward-looking.
+    \item \textit{Macroeconomic forecasting.} A \texttt{statsmodels} ARIMA model forecasting unemployment-rate trajectories (24 prediction records, one-quarter horizon). This use case is not currently high-risk under Annex III but is representative of central-bank and macroeconomic-research pipelines where SR 11-7 / Bank of International Settlements model-risk obligations apply.
+\end{itemize}
+
+For each, we ran the instrumentation, applied the same five-use-case battery as the vol-forecasting demonstration, and verified that the chain-integrity, replay, drift, validation, export, and RTE capabilities all execute without code change. \Cref{tab:crossdomain} summarises the cross-domain results.
+
+\begin{table}[H]
+\centering
+\caption{Cross-domain instrumentation: same package, same schema, same use-case battery, three distinct ML pipelines. The credit-classifier example exercises an EU AI Act Annex III high-risk use case directly; the macro-forecaster exercises an SR 11-7-relevant time-series use case.}\label{tab:crossdomain}
+\footnotesize
+\begin{tabular}{@{}p{3.0cm}rrlll@{}}
+\toprule
+Pipeline & Records & Models & Library & Use case 1-5 status & Annex III ref. \\
+\midrule
+Vol forecasting (Khan 2026) & 6{,}825 & 7 & arch, lightgbm, xgboost & 5/5 pass & not in scope \\
+Credit scoring & 800 & 1 & scikit-learn & 5/5 pass & §5(b) high-risk \\
+Macro (unemployment) & 24 & 1 & statsmodels & 5/5 pass & not in scope \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two observations support the schema's generality. \emph{First, the integration cost is essentially identical across the three pipelines}: the \texttt{@auditable} decorator wraps the prediction function in each case, with feature-name and data-source metadata supplied through the same caller-supplied arguments. No domain-specific schema extension was required. \emph{Second, the same chain-integrity, replay, and export properties hold across pipelines.} The credit-classifier and macro logs both verify cleanly via \texttt{verify\_chain}, replay bit-identically for the inference function, and produce regulator-export bundles whose integrity checks pass identically to the vol-forecasting case.
+
+The cross-domain validation is intentionally modest in scope: the credit-classifier uses synthetic data with \texttt{make\_classification}, and the macro forecaster uses a synthetic AR(1)-with-seasonality DGP. We do not claim to have validated the package against a production bank credit-scoring system. We claim only that the schema and the package transfer without modification across ML libraries and ML problem types within the limits of the demonstrated examples. The \texttt{examples/} directory carries both pipelines under open license for independent reproduction.
+
+\subsection{Adversarial robustness: detection rates under tampering}\label{sec:demonstration_adversarial}
+
+The integrity claims in \Cref{sec:demonstration_replay} and \Cref{sec:demonstration_export} require empirical support beyond ``the chain verifies on the unmodified log.'' This subsection reports controlled tampering experiments. For each of four attack scenarios, we copy the 6,825-record log, apply the tampering, and run \texttt{verify\_chain} from the package's public API. \Cref{tab:adversarial} reports detection.
+
+\begin{table}[H]
+\centering
+\caption{Detection rates under controlled tampering. The baseline is the unmodified 6{,}825-record demonstration log. ``Detected'' means \texttt{verify\_chain} returns \texttt{valid=False} with at least one explanatory error after the tampering is applied. The full per-scenario detail (including the tampered records' identifiers and the verification error messages) is in \texttt{studies/results/adversarial\_summary.json}.}\label{tab:adversarial}
+\footnotesize
+\begin{tabular}{@{}p{5.2cm}p{6.0cm}cc@{}}
+\toprule
+Scenario & Tamper applied & Detected & Error count \\
+\midrule
+\textit{Baseline} (no tampering) & --- & valid & 0 \\
+\midrule
+A. Single-record value corruption & Change \texttt{prediction.value} of one record from 0.1406 to 99.99 inside the JSON column & \checkmark yes & 1 \\
+B. Chain-link tampering & Replace embedded \texttt{prev\_record\_hash} of one record with 64-zero hash & \checkmark yes & 1 \\
+C. Tail truncation & Delete the last 100 records (chain still self-consistent on remaining 6{,}725) & \textbf{no} & 0 \\
+D. Middle-record deletion & Delete one record from the middle of the chain (id=3500) & \checkmark yes & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three observations matter for the integrity-protection claim.
+
+\textit{First, scenarios A, B, and D are all detected.} The hash chain catches any tampering that changes the content of a single record (A), breaks the link between two consecutive records (B), or removes a record from the interior of the chain (D). The detection mechanism in each case is the chain's structural invariant: \texttt{record\_id = SHA-256(canonical-JSON content)} for every record AND \texttt{prev\_record\_hash = record\_id of immediately preceding record}. Any mutation of either field is mechanically caught by \texttt{verify\_chain}.
+
+\textit{Second, scenario C is the honest negative result.} A tail-truncation attack removes a contiguous block of trailing records but leaves the remaining sub-chain self-consistent. \texttt{verify\_chain} sees valid records 1 through 6,725 forming an unbroken hash chain ending at the truncated boundary, with no internal evidence that records 6,726--6,825 ever existed. Detecting this attack requires \emph{external anchoring}: periodic publication of the latest \texttt{record\_id} to a trusted third-party store (an internal audit ledger, a public blockchain, a regulator-controlled timestamp service, or signed publication of latest-record manifest by an HSM) so that an auditor can verify the present log's latest record matches the externally-anchored expected value. We do not provide external attestation in v0.1.0; we provide the substrate on which a firm can layer its preferred attestation strategy. \Cref{sec:future} lists external-attestation hooks as the v0.2.0 priority.
+
+\textit{Third, the detection guarantee is conditional on the verifier reading the chain itself, not a derived summary.} If a regulator accepts a chain-verification summary (``the firm reports verify\_chain returned valid'') without running the verification themselves, the firm could in principle present a tampered chain with a fabricated ``valid'' attestation. The regulator-export bundle (\Cref{sec:demonstration_export}) addresses this by making the verification trivially executable from the bundle alone: a regulator with only \texttt{sha256sum} and a JSON parser can independently re-derive the chain's validity without trusting any attestation from the firm.
 
 \subsection{Summary of the demonstration}\label{sec:demonstration_summary}
 

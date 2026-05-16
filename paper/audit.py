@@ -139,6 +139,68 @@ def main() -> int:
     else:
         fails += fail(f"bundle size: expected 841 KB, got {case4['bundle_size_kb']} KB")
 
+    # ----- Output-drift case study (Tab. 9) -----
+    section("OUTPUT DRIFT (Tab. 9)")
+    od_path = RESULTS / "output_drift_summary.json"
+    if not od_path.exists():
+        fails += fail(f"missing {od_path} (run /tmp/run_output_drift.py)")
+    else:
+        od = json.loads(od_path.read_text())
+        if len(od) == 7:
+            passmsg("output-drift: 7 models analysed")
+        else:
+            fails += fail(f"output-drift: expected 7 models, got {len(od)}")
+        for model, r in od.items():
+            if r["months_with_drift"] != 44 or r["months_evaluated"] != 44:
+                fails += fail(
+                    f"output-drift {model}: expected 44/44, "
+                    f"got {r['months_with_drift']}/{r['months_evaluated']}"
+                )
+        if not fails:
+            passmsg("output-drift: 44/44 months flagged for all 7 models")
+        # Spot-check the ordering claim: GARCH-family KS > tree-based KS
+        def mean_ks(r):
+            return sum(m["ks_statistic"] for m in r["monthly"]) / len(r["monthly"])
+        ranking = {m: mean_ks(r) for m, r in od.items()}
+        tree_max = max(ranking.get("LightGBM", 0), ranking.get("XGBoost", 0))
+        garch_min = min(ranking.get("GARCH", 1),
+                        ranking.get("EGARCH", 1),
+                        ranking.get("GJR-GARCH", 1))
+        if garch_min > tree_max:
+            passmsg(f"GARCH-family output drift > tree-based "
+                    f"(min GARCH KS = {garch_min:.3f}, max tree KS = {tree_max:.3f})")
+        else:
+            fails += fail(
+                f"output-drift ordering claim violated "
+                f"(min GARCH KS = {garch_min:.3f}, max tree KS = {tree_max:.3f})"
+            )
+
+    # ----- Adversarial robustness (Tab. 10) -----
+    section("ADVERSARIAL ROBUSTNESS (Tab. 10)")
+    adv_path = RESULTS / "adversarial_summary.json"
+    if not adv_path.exists():
+        fails += fail(f"missing {adv_path}")
+    else:
+        adv = json.loads(adv_path.read_text())
+        if adv["baseline"]["valid"]:
+            passmsg(f"baseline: valid, 0 errors, {adv['baseline']['n_records']} records")
+        else:
+            fails += fail("baseline invalid")
+        for sid, expected_detected, label in [
+            ("scenario_a", True, "single-record value corruption"),
+            ("scenario_b", True, "chain-link tamper"),
+            ("scenario_c", False, "tail truncation (expected NOT detected)"),
+            ("scenario_d", True, "middle-record deletion"),
+        ]:
+            sc = adv[sid]
+            if sc["detected"] == expected_detected:
+                passmsg(f"{sid}: detected={sc['detected']} as expected ({label})")
+            else:
+                fails += fail(
+                    f"{sid}: expected detected={expected_detected}, "
+                    f"got {sc['detected']} ({label})"
+                )
+
     # ----- Test suite -----
     section("TEST SUITE")
     pytest_result = subprocess.run(

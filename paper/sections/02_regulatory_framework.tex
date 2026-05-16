@@ -77,13 +77,13 @@ The fourth framework relevant to ML audit trails is \citet{ISO42001} (published 
 
 \textit{Clause 8.3 (AI system impact assessment).} Requires documented impact assessments for AI systems including their effects on individuals, groups, and society. Per-prediction trails enable retrospective impact analysis.
 
-\textit{Clause 9.1 (Monitoring, measurement, analysis, and evaluation).} Requires that the organisation determine what needs to be monitored and measured, the methods used, when these are performed, and when the results are analysed and evaluated. Per-prediction logging is the operational substrate.
+\textit{Clause 9.1 (Monitoring, measurement, analysis, and evaluation).} Requires that the organization determine what needs to be monitored and measured, the methods used, when these are performed, and when the results are analyzed and evaluated. Per-prediction logging is the operational substrate.
 
-Unlike SR 11-7 (US bank-specific) or the EU AI Act (EU-jurisdictional), ISO/IEC 42001 is a voluntary international standard accessible to any organisation. Firms pursuing AI Management System certification under ISO/IEC 42001 will increasingly look for tooling that satisfies the relevant clauses automatically. The mapping in \Cref{tab:multi_regulation_matrix} identifies the specific schema fields that satisfy each clause.
+Unlike SR 11-7 (US bank-specific) or the EU AI Act (EU-jurisdictional), ISO/IEC 42001 is a voluntary international standard accessible to any organization. Firms pursuing AI Management System certification under ISO/IEC 42001 will increasingly look for tooling that satisfies the relevant clauses automatically. The mapping in \Cref{tab:multi_regulation_matrix} identifies the specific schema fields that satisfy each clause.
 
 \subsection{Synthesis: what an audit trail must capture}\label{sec:requirements}
 
-Across the four frameworks (SR 11-7, EU AI Act, NIST AI 100-1, ISO/IEC 42001), an audit trail for an ML inference pipeline should record, at minimum, the per-prediction state in \Cref{tab:requirements}. The simpler three-framework view appears in \Cref{tab:requirements}; the full clause-by-clause cross-regulation matrix appears in \Cref{tab:multi_regulation_matrix}.
+Across the four regulatory regimes reviewed (US bank model-risk-management via SR 11-7 / OCC 2011-12 in §2.1, EU AI Act in §2.2, NIST AI 100-1 in §2.3, and ISO/IEC 42001 above), an audit trail for an ML inference pipeline should record, at minimum, the per-prediction state in \Cref{tab:requirements}. The simpler three-framework view (with SR 11-7 standing in for OCC 2011-12, which is its companion) appears in \Cref{tab:requirements}; the full clause-by-clause cross-regulation matrix, which separates SR 11-7 and OCC 2011-12 into distinct columns for traceability, appears in \Cref{tab:multi_regulation_matrix}.
 
 \begin{table}[H]
 \centering
@@ -113,7 +113,7 @@ Drift detection (input + output) & \checkmark & \checkmark & \checkmark \\
 
 \subsubsection{The minimum viable audit trail (MVAT-7)}\label{sec:mvat7}
 
-Of the fourteen rows in \Cref{tab:requirements}, seven appear in at least three of the four frameworks. These seven form what we term the \emph{Minimum Viable Audit Trail} (MVAT-7), the cross-regulatory floor any deployed ML inference pipeline should be expected to maintain:
+Of the fourteen rows in \Cref{tab:requirements}, seven appear in at least three of the four regulatory regimes (counting SR 11-7 / OCC 2011-12 as one US bank-MRM regime). These seven form what we term the \emph{Minimum Viable Audit Trail} (MVAT-7), the cross-regulatory floor any deployed ML inference pipeline should be expected to maintain:
 
 \begin{enumerate}[leftmargin=*, label=\textbf{MVAT-\arabic*}]
     \item \textbf{Model identity} (name + version) \hfill --- traceability of which model produced this prediction
@@ -125,19 +125,19 @@ Of the fourteen rows in \Cref{tab:requirements}, seven appear in at least three 
     \item \textbf{Reviewer or process identifier} (where humans are in the loop) \hfill --- accountability for downstream review
 \end{enumerate}
 
-The MVAT-7 is the conservative cross-section: any framework one of the four regimes will fully accept, and the operational target for a firm that wishes to satisfy all four simultaneously. The richer schema documented in \Cref{tab:schema} captures additional fields (compute environment, random seed, prediction-date horizon, feature summary, output-drift baseline) that satisfy specific clauses without being universal. We propose MVAT-7 as the working terminology for ``the minimum that satisfies SR 11-7, EU AI Act Article 19, NIST AI 100-1 MEASURE-2, and ISO/IEC 42001 Clause 9.1 simultaneously,'' so that future practitioners and standards bodies can refer to a single named target.
+The MVAT-7 is the conservative cross-section: a set any one of the four regimes will fully accept, and the operational target for a firm that wishes to satisfy all four simultaneously. The richer schema documented in \Cref{tab:schema} captures additional fields (compute environment, random seed, prediction-date horizon, feature summary, output-drift baseline) that satisfy specific clauses without being universal. We propose MVAT-7 as the working terminology for ``the minimum that satisfies SR 11-7 / OCC 2011-12, EU AI Act Article 19, NIST AI 100-1 MEASURE-2, and ISO/IEC 42001 Clause 9.1 simultaneously,'' so that future practitioners and standards bodies can refer to a single named target.
 
 \subsubsection{Cross-regulation traceability matrix}\label{sec:cross_regulation}
 
-For an organisation operating across multiple jurisdictions or pursuing multi-standard certification, the relevant question is not ``do we satisfy SR 11-7?'' or ``do we satisfy the EU AI Act?'' separately but rather ``do we satisfy all simultaneously, and where is the audit-trail field that demonstrates each?'' \Cref{tab:multi_regulation_matrix} provides the clause-by-clause traceability matrix. The matrix is built from the regulatory texts directly (rather than from any one firm's interpretation) and links each row to the specific \texttt{mr-audit} schema field that satisfies it.
+For an organization operating across multiple jurisdictions or pursuing multi-standard certification, the relevant question is not ``do we satisfy SR 11-7?'' or ``do we satisfy the EU AI Act?'' separately but rather ``do we satisfy all simultaneously, and where is the audit-trail field that demonstrates each?'' \Cref{tab:multi_regulation_matrix} provides the clause-by-clause traceability matrix. The matrix is built from the regulatory texts directly (rather than from any one firm's interpretation) and links each row to the specific \texttt{mr-audit} schema field that satisfies it.
 
-\begin{table}[H]
+\begin{landscape}
+\begin{table}
 \centering
 \caption{Cross-regulation traceability matrix. Each row is an audit-trail requirement; columns map the requirement to the explicit clause in each framework that references it. ``\checkmark'' = explicit reference; ``\textit{impl.}'' = implicit in broader principles; ``--'' = not addressed. The last column identifies the \texttt{mr-audit} schema field or capability that satisfies the requirement.}\label{tab:multi_regulation_matrix}
-\scriptsize
-\setlength{\tabcolsep}{2pt}
-\resizebox{\textwidth}{!}{
-\begin{tabular}{@{}p{2.7cm}p{1.4cm}p{1.3cm}p{1.7cm}p{1.5cm}p{1.3cm}p{2.9cm}@{}}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}p{4.0cm}p{2.4cm}p{1.9cm}p{2.8cm}p{2.6cm}p{1.6cm}p{5.0cm}@{}}
 \toprule
 Required field / capability & SR 11-7 & OCC 2011-12 & EU AI Act & NIST AI 100-1 & ISO/IEC 42001 & \texttt{mr-audit} field \\
 \midrule
@@ -161,12 +161,12 @@ GDPR explanation & -- & -- & Art.~86; \citet{GDPR}~Art.~22 & GOVERN-3 & §8.3 & 
 Lifecycle retention & §V.G & §IV.B & Art.~19 (min.~6 mo.) & GOVERN-4 & §7.5 & filesystem persistence \\
 \bottomrule
 \end{tabular}
-}
 \end{table}
+\end{landscape}
 
 \Cref{tab:multi_regulation_matrix} is, to our knowledge, the first published matrix that maps all five major ML-audit-trail-relevant frameworks (SR 11-7, OCC 2011-12, EU AI Act, NIST AI 100-1, ISO/IEC 42001) clause-by-clause to a specific implementation reference. The matrix is intended as a citable artefact that compliance officers, model-validation analysts, and standards reviewers can reference directly without re-deriving the cross-walks themselves.
 
-The matrix supports two practical claims. First, \texttt{mr-audit}'s schema satisfies every row of the matrix by default, with the two firm-supplied rows (reviewer ID, lifecycle retention) deferred to the firm's operational policy as is conventional. Second, an organisation pursuing simultaneous coverage of multiple regulatory regimes does not need separate audit-trail systems per regulation; a single \texttt{mr-audit}-instrumented pipeline satisfies the cross-section.
+The matrix supports two practical claims. First, \texttt{mr-audit}'s schema satisfies every row of the matrix by default, with the two firm-supplied rows (reviewer ID, lifecycle retention) deferred to the firm's operational policy as is conventional. Second, an organization pursuing simultaneous coverage of multiple regulatory regimes does not need separate audit-trail systems per regulation; a single \texttt{mr-audit}-instrumented pipeline satisfies the cross-section.
 
 The package described in \Cref{sec:package} captures every row of \Cref{tab:requirements} by default, with the exception that input feature values are stored as a configurable summary (mean/std or full-vector at the firm's choice) rather than as the raw tick-level inputs, to keep log sizes tractable.
 

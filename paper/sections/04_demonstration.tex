@@ -179,7 +179,7 @@ Third, \emph{the input/output drift comparison enables a covariate-vs-concept-dr
 \toprule
               & \textbf{Output drift: NO}                                                          & \textbf{Output drift: YES} \\
 \midrule
-\textbf{Input drift: NO}  & \textbf{Stable.} Model operating within the documented assumption envelope. No re-validation triggered. & \textbf{Concept drift.} Inputs stable but predictions shifting; model behaviour has changed. Strongest re-validation trigger. \\
+\textbf{Input drift: NO}  & \textbf{Stable.} Model operating within the documented assumption envelope. No re-validation triggered. & \textbf{Concept drift.} Inputs stable but predictions shifting; model behavior has changed. Strongest re-validation trigger. \\
 \midrule
 \textbf{Input drift: YES} & \textbf{Absorbed shift.} Inputs moved but model has absorbed it without changing predictions. Low-priority review. & \textbf{Joint drift.} Inputs and predictions both shifting; consistent with a regime change in the underlying generating process. Re-validation against the new regime. \\
 \bottomrule
@@ -292,7 +292,8 @@ For each, we ran the instrumentation, applied the same five-use-case battery as 
 \centering
 \caption{Cross-domain instrumentation: same package, same schema, same use-case battery, three distinct ML pipelines. The credit-classifier example exercises an EU AI Act Annex III high-risk use case directly; the macro-forecaster exercises an SR 11-7-relevant time-series use case.}\label{tab:crossdomain}
 \footnotesize
-\begin{tabular}{@{}p{3.0cm}rrlll@{}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{3.4cm}rcp{3.0cm}ll@{}}
 \toprule
 Pipeline & Records & Models & Library & Use case 1-5 status & Annex III ref. \\
 \midrule

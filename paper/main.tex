@@ -44,7 +44,7 @@ under SR 11-7 and the EU AI Act:\\
 A Demonstration on Volatility Forecasting}
 
 \author{
-    Akram Khan\thanks{Independent Researcher. ORCID: \href{https://orcid.org/0009-0002-7521-8648}{0009-0002-7521-8648}. Replication code, audit logs, and audit script: \href{https://github.com/ayk5511/mr-audit}{github.com/ayk5511/mr-audit}.}
+    Akram Khan\thanks{Independent Researcher. ORCID: \href{https://orcid.org/0009-0002-7521-8648}{0009-0002-7521-8648}. Email: \href{mailto:1819ak@gmail.com}{1819ak@gmail.com}. Replication code, audit logs, and audit script: \href{https://github.com/ayk5511/mr-audit}{github.com/ayk5511/mr-audit}.}
 }
 
 \date{April 2026}
@@ -60,7 +60,7 @@ Existing open-source ML tooling (MLflow, Weights \& Biases, DVC, SageMaker Model
 
 The package writes one immutable, hash-chained record per prediction, capturing git commit hash, library versions, input hash, model parameters, compute environment, random seed, and prediction value. Records form a Merkle-style chain via SHA-256 hash linking, so tampering with any single record breaks the chain. The package ships with a replay engine, a drift-detection module (Kolmogorov-Smirnov plus Population Stability Index), and a regulator-export bundle that produces a self-contained zip whose integrity can be verified with off-the-shelf tools.
 
-We demonstrate the package by retrospectively instrumenting the seven-model panel of \citet{KhanVol2026}: S\&P 500 5-day realized volatility, 980 trading days from 2022-01-03 to 2025-11-26. The instrumentation produces a 6{,}825-record audit log. Four use cases are demonstrated end-to-end. (i)~Reproducibility audit: 5/5 randomly sampled records replay bit-identically. (ii)~Drift detection: the KS test flags drift in 44 of 44 evaluated months relative to the 2022 Q1 baseline, consistent with the documented regime shift between high-vol 2022 and lower-vol 2023+. (iii)~Per-model validation report generated from the log alone. (iv)~Regulator-export bundle (841 KB zip; all SHA-256 checks pass).
+We demonstrate the package by retrospectively instrumenting the seven-model panel of \citet{KhanVol2026}: S\&P 500 5-day realized volatility, 980 trading days from 2022-01-03 to 2025-11-26. The instrumentation produces a 6{,}825-record audit log. Five use cases are demonstrated end-to-end. (i)~Reproducibility audit: 5/5 randomly sampled records replay bit-identically. (ii)~Drift detection: the KS test flags drift in 44 of 44 evaluated months relative to the 2022 Q1 baseline, consistent with the documented regime shift between high-vol 2022 and lower-vol 2023+. (iii)~Per-model validation report generated from the log alone. (iv)~Regulator-export bundle (841 KB zip; all SHA-256 checks pass). (v)~Right-to-explanation: per-prediction reconstruction satisfying GDPR Article 22 and EU AI Act Article 86 obligations.
 
 The package, the demonstration scripts, the 6{,}825-record audit log, and an audit script that re-derives every numerical claim in this paper from JSON outputs are released at \href{https://github.com/ayk5511/mr-audit}{github.com/ayk5511/mr-audit}, scoring 2 on the Reproducibility Disclosure Score rubric of \citet{Khan2026Survey}.
 

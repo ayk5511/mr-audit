@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mr-audit"
-version = "0.0.1"
+version = "0.1.0"
 description = "An audit-trail framework for ML pipelines under SR 11-7 and the EU AI Act"
 readme = "README.md"
 requires-python = ">=3.11"

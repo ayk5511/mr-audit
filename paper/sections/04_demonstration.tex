@@ -98,7 +98,7 @@ Record & Model & Predicted-for date & Logged prediction & Input hash match & Pre
 \end{tabular}
 \end{table}
 
-All 5 sampled replays match bit-identically. This is the expected behaviour for a deterministic prediction function with fully-recorded inputs: any failure here would indicate either a hash-chain breach or a code-state change between record time and replay time.
+All 5 sampled replays match bit-identically. This is the expected behavior for a deterministic prediction function with fully-recorded inputs: any failure here would indicate either a hash-chain breach or a code-state change between record time and replay time.
 
 To confirm that the replay engine actually detects mismatches, we additionally verified (in \texttt{tests/test\_replay.py}) that supplying wrong inputs (e.g.\ \texttt{x=99.0} when the record was made with \texttt{x=2.0}) yields \texttt{input\_hash\_match = False} with an explanatory note in the result, and that supplying the correct inputs but a function with different logic (e.g.\ \texttt{return x * 3} when the recorded function was \texttt{return x * 2}) yields \texttt{prediction\_match = False}.
 
